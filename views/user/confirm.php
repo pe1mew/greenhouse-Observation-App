@@ -15,6 +15,7 @@ require APP_ROOT . '/views/layout/header.php';
 
 <form method="post" action="<?= e($updateUrl) ?>" enctype="multipart/form-data" id="photo-form">
   <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
+  <input type="hidden" name="_from" value="confirm">
   <input type="file" name="photo" id="photo-input"
          accept="image/*" capture="environment" style="display:none">
 

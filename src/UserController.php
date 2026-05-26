@@ -469,7 +469,11 @@ class UserController
                     $this->db->prepare(
                         'UPDATE observation SET note = ?, severity = ?, photo_path = ?, updated_at = ? WHERE id = ?'
                     )->execute([$note ?: null, $sev, $photoPath, utc_now(), $obsId]);
-                    redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
+                    if (($_POST['_from'] ?? '') === 'confirm') {
+                        redirect($this->basePath . '/' . $ghId . '/');
+                    } else {
+                        redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
+                    }
                     return;
                 }
             }
