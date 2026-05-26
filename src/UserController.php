@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace GreenhouseObs;
 
+use GreenhouseObs\PhotoHandler;
+
 class UserController
 {
     private array  $cfg;
@@ -69,6 +71,26 @@ class UserController
                 return;
             }
             $this->confirm($ghId, $gh, $user, (int)$m[1]);
+            return;
+        }
+
+        // /<gh-id>/observation/<obs-id>/photo/delete  (POST only)
+        if (preg_match('#^/observation/(\d+)/photo/delete$#', $sub, $m)) {
+            if (!$user) {
+                redirect($this->basePath . '/' . $ghId . '/register');
+                return;
+            }
+            $this->deleteObsPhoto($method, $ghId, $user, (int)$m[1]);
+            return;
+        }
+
+        // /<gh-id>/observation/<obs-id>/photo  (GET only)
+        if (preg_match('#^/observation/(\d+)/photo$#', $sub, $m)) {
+            if (!$user) {
+                http_response_code(404);
+                exit;
+            }
+            $this->servePhoto($ghId, $user, (int)$m[1]);
             return;
         }
 
@@ -423,13 +445,32 @@ class UserController
             if ($sev !== null && ($sev < 1 || $sev > 5)) {
                 $error = lang('severity_invalid');
             } else {
+                $photoPath = $obs['photo_path'];
+                $upload    = $_FILES['photo'] ?? null;
+
+                if ($upload && $upload['error'] === UPLOAD_ERR_OK) {
+                    $photoError = PhotoHandler::validate($upload);
+                    if ($photoError) {
+                        $error = lang($photoError);
+                        goto render_observation;
+                    }
+                    if ($photoPath) {
+                        PhotoHandler::delete($this->cfg['photo_root'], $photoPath);
+                    }
+                    $photoPath = PhotoHandler::store($upload, $this->cfg['photo_root'], $obsId);
+                } elseif ($upload && in_array($upload['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE])) {
+                    $error = lang('photo_too_large');
+                    goto render_observation;
+                }
+
                 $this->db->prepare(
-                    'UPDATE observation SET note = ?, severity = ?, updated_at = ? WHERE id = ?'
-                )->execute([$note ?: null, $sev, utc_now(), $obsId]);
+                    'UPDATE observation SET note = ?, severity = ?, photo_path = ?, updated_at = ? WHERE id = ?'
+                )->execute([$note ?: null, $sev, $photoPath, utc_now(), $obsId]);
                 redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
                 return;
             }
         }
+        render_observation:
 
         if (isset($_GET['saved'])) {
             $success = lang('observation_saved');
@@ -448,6 +489,9 @@ class UserController
             'error'      => $error,
             'success'    => $success,
             'cfg'        => $this->cfg,
+            'photoUrl'   => $obs['photo_path']
+                              ? app_url($ghId . '/observation/' . $obsId . '/photo')
+                              : null,
         ]);
     }
 
@@ -486,6 +530,63 @@ class UserController
 
         $this->db->prepare('DELETE FROM observation WHERE id = ?')->execute([$obsId]);
         redirect($this->basePath . '/' . $ghId . '/?deleted=1');
+    }
+
+    private function servePhoto(string $ghId, array $user, int $obsId): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT photo_path, user_id FROM observation WHERE id = ? AND greenhouse_id = ?'
+        );
+        $stmt->execute([$obsId, $ghId]);
+        $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$obs || (int)$obs['user_id'] !== (int)$user['id'] || empty($obs['photo_path'])) {
+            http_response_code(404);
+            exit;
+        }
+
+        PhotoHandler::serve($this->cfg['photo_root'], (string)$obs['photo_path']);
+    }
+
+    private function deleteObsPhoto(string $method, string $ghId, array $user, int $obsId): void
+    {
+        if ($method !== 'POST') {
+            redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId);
+            return;
+        }
+
+        if (!hash_equals($user['csrf_token'], $_POST['_csrf'] ?? '')) {
+            http_response_code(403);
+            render('error', [
+                'statusCode' => 403,
+                'heading'    => lang('error_403_title'),
+                'body'       => lang('csrf_invalid'),
+            ]);
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT photo_path, user_id, ts FROM observation WHERE id = ? AND greenhouse_id = ?'
+        );
+        $stmt->execute([$obsId, $ghId]);
+        $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$obs || (int)$obs['user_id'] !== (int)$user['id'] || empty($obs['photo_path'])) {
+            redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId);
+            return;
+        }
+
+        if (!$this->isEditable((string)$obs['ts'], (int)$this->cfg['edit_window_hours'])) {
+            redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId);
+            return;
+        }
+
+        PhotoHandler::delete($this->cfg['photo_root'], (string)$obs['photo_path']);
+        $this->db->prepare(
+            'UPDATE observation SET photo_path = NULL, updated_at = ? WHERE id = ?'
+        )->execute([utc_now(), $obsId]);
+
+        redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
     }
 
     private function isEditable(string $ts, int $windowHours): bool

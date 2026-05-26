@@ -24,12 +24,29 @@ $homeUrl = app_url($ghId . '/');
   <?php if ($obs['note'] !== null && $obs['note'] !== ''): ?>
     <p style="margin-top:.5rem;white-space:pre-wrap"><?= e($obs['note']) ?></p>
   <?php endif; ?>
+
+  <?php if ($photoUrl): ?>
+    <div style="margin-top:.75rem">
+      <img src="<?= e($photoUrl) ?>" alt="foto"
+           style="max-width:100%;border-radius:var(--radius);display:block">
+      <?php if ($editable): ?>
+        <form method="post"
+              action="<?= e(app_url($ghId . '/observation/' . $obs['id'] . '/photo/delete')) ?>"
+              style="margin-top:.4rem">
+          <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
+          <button type="submit" class="btn btn-danger btn-sm">Foto verwijderen</button>
+        </form>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
 </section>
 
 <?php if ($editable): ?>
 <section>
   <h2 style="font-size:1rem;margin-bottom:.5rem"><?= e(lang('edit')) ?></h2>
-  <form method="post" action="<?= e(app_url($ghId . '/observation/' . $obs['id'])) ?>">
+  <form method="post"
+        action="<?= e(app_url($ghId . '/observation/' . $obs['id'])) ?>"
+        enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
     <div class="row">
       <label><?= e(lang('severity_label')) ?></label>
@@ -44,6 +61,14 @@ $homeUrl = app_url($ghId . '/');
       <label><?= e(lang('note_label')) ?></label>
       <textarea name="note" rows="3" style="width:100%;box-sizing:border-box"><?= e($obs['note'] ?? '') ?></textarea>
     </div>
+    <?php if (!$photoUrl): ?>
+    <div class="row" style="flex-direction:column;align-items:flex-start">
+      <label style="margin-bottom:.25rem">Foto</label>
+      <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+             style="color:var(--fg)">
+      <p class="hint" style="margin-top:.25rem">JPEG, PNG of WebP · max 8 MB</p>
+    </div>
+    <?php endif; ?>
     <button type="submit" class="btn" style="margin-top:.25rem"><?= e(lang('save')) ?></button>
   </form>
 </section>
@@ -51,7 +76,7 @@ $homeUrl = app_url($ghId . '/');
 <section style="margin-top:.5rem">
   <form method="post"
         action="<?= e(app_url($ghId . '/observation/' . $obs['id'] . '/delete')) ?>"
-        onsubmit="return confirm('<?= e(addslashes(lang('observation_deleted'))) ?> — zeker weten?')">
+        onsubmit="return confirm('Waarneming verwijderen?')">
     <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
     <button type="submit" class="btn btn-danger btn-sm"><?= e(lang('delete')) ?></button>
   </form>

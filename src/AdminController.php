@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace GreenhouseObs;
 
 use Endroid\QrCode\Builder\Builder;
+use GreenhouseObs\PhotoHandler;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
 use Endroid\QrCode\Writer\PngWriter;
@@ -129,6 +130,10 @@ class AdminController
         }
         if (preg_match('#^/observations/(\d+)/delete$#', $sub, $m)) {
             $this->handleObservationDelete($method, (int)$m[1], $csrf);
+            return;
+        }
+        if (preg_match('#^/observations/(\d+)/photo$#', $sub, $m)) {
+            $this->handleObservationPhoto((int)$m[1]);
             return;
         }
         if (preg_match('#^/observations/(\d+)/?$#', $sub, $m)) {
@@ -739,6 +744,20 @@ class AdminController
             'obs'       => $obs,
             'cfg'       => $this->cfg,
         ]);
+    }
+
+    private function handleObservationPhoto(int $obsId): void
+    {
+        $stmt = $this->db->prepare('SELECT photo_path FROM observation WHERE id = ?');
+        $stmt->execute([$obsId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$row || empty($row['photo_path'])) {
+            http_response_code(404);
+            exit;
+        }
+
+        PhotoHandler::serve($this->cfg['photo_root'], (string)$row['photo_path']);
     }
 
     private function handleObservationDelete(string $method, int $obsId, string $csrf): void

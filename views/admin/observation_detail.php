@@ -21,8 +21,11 @@
     <tr><th style="text-align:right;padding-right:1rem">Bijgewerkt</th>
         <td><?= e(tz_local($obs['updated_at'], $cfg['timezone'])) ?></td></tr>
     <?php if (!empty($obs['photo_path'])): ?>
-    <tr><th style="text-align:right;padding-right:1rem">Foto</th>
-        <td><?= e(basename($obs['photo_path'])) ?></td></tr>
+    <tr><th style="text-align:right;padding-right:1rem;vertical-align:top">Foto</th>
+        <td>
+          <img src="<?= e($adminBase) ?>/observations/<?= (int)$obs['id'] ?>/photo"
+               alt="foto" style="max-width:400px;border-radius:var(--radius);display:block">
+        </td></tr>
     <?php endif; ?>
   </table>
 

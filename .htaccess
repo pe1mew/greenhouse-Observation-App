@@ -1,5 +1,9 @@
 Options -Indexes
 
+# ── PHP upload limits for photo upload ───────────────────────────────────
+php_value upload_max_filesize 8M
+php_value post_max_size 10M
+
 # ── Security: block direct access to source and config files ─────────────
 <FilesMatch "^(config\.php|composer\.(json|lock))$">
     Require all denied
