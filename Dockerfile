@@ -16,7 +16,12 @@
 FROM php:8.3-fpm
 
 # Build dependencies for the PHP extensions we compile in.
+# - libsqlite3-dev: pdo_sqlite headers + pkg-config (libsqlite3-0 in the base
+#   is runtime-only; the build needs the -dev package)
+# - libpng/jpeg/freetype-dev: gd
+# - libzip-dev: zip
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsqlite3-dev \
         libpng-dev libjpeg-dev libfreetype-dev libzip-dev \
         unzip git \
     && rm -rf /var/lib/apt/lists/*
