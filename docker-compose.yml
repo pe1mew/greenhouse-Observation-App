@@ -1,0 +1,55 @@
+# Greenhouse Observation App — Docker Compose
+#
+# Run from the repo root:
+#
+#   1. Build the image (first time, and after Dockerfile changes):
+#        docker compose build
+#
+#   2. One-off composer install (runs as the invoking user so vendor/ is
+#      owned by you, not by the container's www-data):
+#        docker compose run --rm --user "$(id -u):$(id -g)" php-fpm \
+#            composer install --no-dev --optimize-autoloader
+#
+#   3. Start the long-running FPM container:
+#        docker compose up -d
+#
+#   4. Watch the logs:
+#        docker compose logs -f
+#
+#   5. Stop:
+#        docker compose down
+#
+# nginx (on the host) fastcgi_passes to 127.0.0.1:9083 → this container.
+# See implementationPlan.md for the full deploy walkthrough.
+
+services:
+  php-fpm:
+    build: .
+    image: webapp-fpm:latest
+    container_name: webapp-fpm
+    restart: unless-stopped
+
+    # Run as www-data (UID 33) — matches host's www-data so bind-mount perms
+    # on the data directory align cleanly.
+    user: "33:33"
+
+    # FPM listens on TCP 9000 inside the container; expose only to host loopback.
+    ports:
+      - "127.0.0.1:9083:9000"
+
+    volumes:
+      # Application code (this directory). Host perms: remko:remko 755;
+      # the container's www-data reads via the 'other' bits.
+      - ./:/var/www/html
+
+      # Database + photos (outside the document root per FR-INST-040).
+      # Default path can be overridden by setting WEBAPP_DATA in the
+      # environment or in a sibling .env file.
+      - ${WEBAPP_DATA:-/var/www/webapp_data}:/var/www/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(0);'"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

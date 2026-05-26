@@ -1,0 +1,29 @@
+# Build context exclusions for `docker compose build`.
+# The Dockerfile does not COPY app code in (we bind-mount at runtime),
+# so this mainly reduces what's transferred to the Docker daemon.
+
+.git/
+.github/
+
+# Design + ops docs — not needed at runtime.
+design/
+manual/
+
+# Test outputs.
+testResults/
+*.log
+
+# Local config + runtime state — never in the image.
+config.php
+.env
+.env.local
+
+# Composer artefacts — installed via one-off `compose run`, not baked in.
+vendor/
+
+# OS / editor noise.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
