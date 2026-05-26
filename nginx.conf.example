@@ -1,0 +1,41 @@
+# Greenhouse Observation App — nginx configuration example
+# Adjust server_name, root, and PHP socket path to your deployment.
+# See TDS §12 for deployment notes.
+
+server {
+    listen 80;
+    server_name obs.example.com;
+    root /var/www/html/greenhouse;
+    index index.php;
+
+    # Route all requests through index.php (mirrors .htaccess RewriteRule)
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP-FPM handler
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        # Must match TDS-STO-060 upload limit (8 MB file + form overhead)
+        client_max_body_size 12M;
+    }
+
+    # Block direct access to source, templates, migrations, and config
+    location ~ ^/(src|views|migrations|lang|composer\.(json|lock)|config\.php|template_config\.php)(/.*)? {
+        deny all;
+        return 404;
+    }
+
+    # Block dotfiles
+    location ~ /\. {
+        deny all;
+        return 404;
+    }
+
+    # Intercept 413 (payload too large) before PHP runs and serve the
+    # Dutch error template instead of nginx's default page (TDS-UI-150).
+    # Requires proxy_intercept_errors on when behind a reverse proxy.
+    error_page 413 /error/413;
+}

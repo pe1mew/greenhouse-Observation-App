@@ -6,9 +6,9 @@ Designed for the **herenboeren** (community-supported agriculture) context: low-
 
 ## Status
 
-**Design phase — 2026-05-23.** No implementation has started yet.
+**Step 1 implementation in progress — 2026-05-26.**
 
-The Functional Design Specification (FDS) and the Technical Design Specification (TDS) are complete and operator-approved. Step 1 implementation is the next milestone.
+Design phase complete and operator-approved (2026-05-23). Repository scaffold in place; bootstrap and application code in progress.
 
 ## What it does
 

@@ -1,0 +1,20 @@
+Options -Indexes
+
+# ── Security: block direct access to source and config files ─────────────
+<FilesMatch "^(config\.php|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+<DirectoryMatch "^.*(src|views|migrations|lang)$">
+    Require all denied
+</DirectoryMatch>
+
+# ── URL routing: send all requests through index.php ─────────────────────
+RewriteEngine On
+
+# Pass through real files and directories (assets, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route everything else to the entry point
+RewriteRule ^ index.php [QSA,L]

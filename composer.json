@@ -1,0 +1,23 @@
+{
+    "name": "pe1mew/greenhouse-observation-app",
+    "description": "Mobile-first greenhouse observation recording web application",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^7.4",
+        "ext-pdo_sqlite": "*",
+        "ext-mbstring": "*",
+        "endroid/qr-code": "^4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "GreenhouseObs\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

@@ -67,10 +67,11 @@ Inline references use `[FDS FR-X-NNN]`, `[BD §n]`, `[OS §n]`.
 
 ## 5. Logical data model (`TDS-DM`)
 
-The entity-relationship diagram below is normative for structure; schema-level detail (column types, NULL constraints, indices) is the implementer's call within the constraints of the FRs. No row-level AC — the diagram is validated by the existence of the corresponding tables and columns after `0001_initial.sql` runs (TDS-STO-080).
+The entity-relationship diagram below is normative for structure; schema-level detail (column types, NULL constraints, indices) is the implementer's call within the constraints of the FRs and the notes below. No row-level AC — the diagram is validated by the existence of the corresponding tables and columns after `0001_initial.sql` runs (TDS-STO-080).
 
 ```
-greenhouse (id PK, name, notes, created_at)
+greenhouse (id TEXT PK CHECK(id GLOB '[0-9A-F][0-9A-F][0-9A-F][0-9A-F]'),
+            name, location NULL, notes NULL, created_at)
    │
    │ 1..*
    ▼
@@ -81,14 +82,15 @@ observation (id PK, greenhouse_id FK, user_id FK,
    ▲
    │ *..1
    │
-user (id PK, handle, current_cookie_token, csrf_token,
+user (id PK, handle, handle_norm, current_cookie_token, csrf_token,
       current_greenhouse_id FK NULL,
       created_at, last_seen_at, cookie_invalidated_at NULL)
 
-category (id PK, internal_key UNIQUE, display_name,
+category (id PK, internal_key TEXT UNIQUE, display_name,
           active_flag, sort_order)
-tag      (id PK, category_id FK, internal_key UNIQUE,
-          display_name, active_flag, sort_order)
+tag      (id PK, category_id FK, internal_key TEXT,
+          display_name, active_flag, sort_order,
+          UNIQUE (category_id, internal_key))
 
 admin (id PK CHECK(id=1), password_hash, password_updated_at)
 
@@ -99,6 +101,10 @@ admin_audit (id PK, ts, action, target_kind, target_id, details)   -- Step 2
 
 Notes:
 
+- **`greenhouse.id`** is a `TEXT` primary key containing the 4-character uppercase hex identifier (FR-GH-010). It is the join key across the data model and the URL path segment. SQLite does not support regex constraints; use `GLOB '[0-9A-F][0-9A-F][0-9A-F][0-9A-F]'` for the CHECK. Validation at the application layer (TDS-URL-050) is the primary enforcement. All foreign keys that reference `greenhouse.id` (e.g. `observation.greenhouse_id`, `user.current_greenhouse_id`) are therefore TEXT columns too.
+- **`greenhouse.location`** is an optional free-text field for human-readable location information (e.g. "Noord-kas, rij 3"), required by FR-GH-060 ("optional location and free-text notes"). It may be NULL.
+- **`tag.internal_key`** carries a `UNIQUE (category_id, internal_key)` composite constraint, not a global `UNIQUE`. FR-TAX-030 specifies "UNIQUE per parent scope" — the same key string (e.g. `all_good`) may appear in different categories. The composite index on `(category_id, internal_key)` enforces this correctly.
+- **`user.handle_norm`** is the lower-cased version of `handle` (PHP `mb_strtolower`), used for case-insensitive uniqueness enforcement (TDS-AUTH-110). A UNIQUE INDEX on `handle_norm` is the database-layer constraint.
 - All `ts`, `created_at`, `updated_at`, `password_updated_at`, etc. columns are stored as **UTC** TEXT (`YYYY-MM-DDTHH:MM:SSZ`) per TDS-CFG-070; conversion to the configured timezone happens at render time.
 - `internal_key` for category and tag is the stable identity required by FR-TAX-030. Display names map to internal keys; observations persist only the internal key.
 - `user.current_cookie_token` is the column updated by FR-USR-030 (admin forget) and FR-IDU-060 (user forget). The user row itself is preserved (FR-USR-040).
@@ -112,7 +118,7 @@ Notes:
 |---|---|---|---|
 | TDS-CFG-010 | The configuration file is `config.php`, a PHP file at a fixed location next to the application entry-point. Its internal shape is locked by TDS-CFG-060. | `config.php` exists at the application root; the bootstrap loads it on every request; deleting `config.php` triggers the FR-INST-020 setup-required page. | FR-INST-010 |
 | TDS-CFG-020 | The distribution ships `template_config.php` as a starter template with documented keys and safe defaults. It does **not** ship a populated `config.php`. | Inherits [FDS FR-INST-010]. | FR-INST-010 |
-| TDS-CFG-030 | On first request, the app verifies that `config.php` exists and that `admin_name` and `admin_password` are both **non-empty**; otherwise it renders an informative setup-required page and refuses other operations. | Inherits [FDS FR-INST-020]. | FR-INST-020 |
+| TDS-CFG-030 | On first request, the app verifies that `config.php` exists and that `admin_name` is **non-empty**; otherwise it renders an informative setup-required page and refuses other operations. The admin password is **not** checked here — it lives in the database, not in config, and is handled separately by the setup wizard (TDS-AUTH-090). | Inherits [FDS FR-INST-020]. | FR-INST-020 |
 | TDS-CFG-040 | Required configuration keys: `admin_name`, `admin_session_timeout` (seconds), `db_path` (SQLite file path), `photo_root` (photo storage directory), `admin_url_path` (default `management`), `edit_window_hours` (default `24`), `timezone` (IANA name, default `Europe/Amsterdam`), `retention_days` (positive integer days, or `0` to disable; **default `365`** — bounds the persistent data without forcing a value). Optional but **strongly recommended** for QR-code correctness: `public_base_url` (canonical public URL of the deployment, e.g. `https://obs.example.com`, no trailing slash). When `public_base_url` is unset, the app derives the base URL from `$_SERVER` per TDS-URL-040; reverse-proxy deployments **shall** set it explicitly so the QR matches the operator-facing URL. Additional keys may be added. **Note**: `admin_password` is deliberately **not** a config key — it is set via the setup wizard (FR-SEC-020) and stored as a hash in the database per TDS-AUTH-080. | Inherits [FDS FR-INST-030] + [FDS FR-INST-080]. The shipped `template_config.php` lists all required keys with default values where defined. | FR-INST-030, FR-SEC-020, FR-SEC-060, FR-GH-070 |
 | TDS-CFG-050 | The `edit_window_hours` value shall be administered **only** in `config.php`; the admin GUI shall not expose a control to override it. | Inherits [FDS FR-INST-030] (zero edit-window form fields in admin GUI HTML). | FR-INST-030 |
 | TDS-CFG-060 | `config.php` shall be a PHP file that **returns an associative array** of configuration values: `<?php return ['admin_name' => '...', 'db_path' => '...', ...];`. Defaults shall be merged in code from a separate baseline array (e.g. `array_replace(default_config(), require __DIR__ . '/config.php')`). The file shall not use `define()` constants or a `Config` class. | `grep -E "\bdefine\s*\(" config.php template_config.php` returns zero matches; the parsed value of `require 'config.php'` is an `array`; no `Config` class exists in `src/`. | FR-INST-010, TDS-CFG-010 |
