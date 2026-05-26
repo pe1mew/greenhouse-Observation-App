@@ -42,7 +42,7 @@ require APP_ROOT . '/views/layout/header.php';
        style="display:none;max-width:100%;border-radius:var(--radius);margin-bottom:.75rem">
 
   <div id="btn-after" style="display:none">
-    <button type="submit" class="primary-cta cta-teal">Foto opslaan</button>
+    <button type="submit" class="primary-cta cta-teal"><?= e(lang('save')) ?></button>
     <button type="button" class="primary-cta cta-blue" style="margin-top:.5rem" onclick="retake()">Opnieuw</button>
   </div>
 
