@@ -331,4 +331,9 @@ A: Uw waarnemingen zijn zichtbaar voor de beheerder. Andere kasmedewerkers kunne
 
 ---
 
+**Q: Ik scan de QR-code maar krijg de melding dat de kas gearchiveerd is. Wat betekent dat?**  
+A: De beheerder heeft deze kas tijdelijk of definitief uit gebruik genomen. U kunt geen nieuwe waarnemingen registreren voor deze kas. Scan de QR-code van een andere, actieve kas, of neem contact op met de beheerder als u denkt dat dit een fout is.
+
+---
+
 *Vragen of problemen? Neem contact op met de beheerder van de app.*

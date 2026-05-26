@@ -278,17 +278,21 @@ A quick health check at a glance. No actions here — use the navigation to reac
 
 ### 6.1 Greenhouse list
 
-> **📷 Screenshot needed:** The "Kassen" list page — table with columns ID, Naam, Locatie, Waarnemingen, and action buttons "QR" and "Bewerken" per row.
+> **📷 Screenshot needed:** The "Kassen" list page — table with columns ID, Naam, Locatie, Waarnemingen, Status (badge), and action buttons "QR", "Bewerken", "Archiveren/Herstellen" per row.
 
 The list shows every greenhouse with:
 - **ID** — the 4-character hex identifier (`5E3F`)
 - **Naam** — the friendly name
 - **Locatie** — optional location note
 - **Waarnemingen** — number of observations linked to this greenhouse
+- **Status** — `Actief` (green badge) or `Gearchiveerd` (grey badge)
+
+Active greenhouses appear first in the list, archived ones follow.
 
 **Actions per row:**
 - `"QR"` — opens a modal with the QR code PNG and a `"Downloaden"` link
 - `"Bewerken"` — opens the edit form
+- `"Archiveren"` / `"Herstellen"` — archives or restores the greenhouse (see §6.5)
 
 ### 6.2 Creating a greenhouse
 
@@ -300,9 +304,9 @@ On the edit form:
 
 - **ID** is read-only after creation — it is shown as plain text, not an input field. If you need to correct an ID, delete the greenhouse (requires zero observations — see §6.4) and recreate it.
 - **Naam**, **Locatie**, and **Notities** can be changed at any time. The new name appears on the operator home screen on the next page load.
-- Below the form: the QR code is shown inline with the encoded URL for verification.
-- Below the QR: observation count for this greenhouse.
-- If the observation count is **0**, a `"Verwijderen"` (delete) button is shown.
+- **Status section** (below the edit fields): shows whether the greenhouse is active or archived, with an `"Archiveren"` or `"Herstellen"` button to toggle the state (see §6.5).
+- **QR section** (below Status): the QR code is shown inline with the encoded URL for verification.
+- **Statistieken section** (below QR): observation count for this greenhouse. If the count is **0**, a `"Verwijderen"` (delete) button is shown.
 
 > **Changing the friendly name mid-season is fine. Changing the ID invalidates all printed QR signs — re-print before operators arrive.**
 
@@ -315,6 +319,27 @@ You cannot delete a greenhouse that has observations. The `"Verwijderen"` button
 3. Once the count is zero, return to the greenhouse edit page — the delete button appears.
 
 This safeguard is intentional and cannot be bypassed through the GUI.
+
+### 6.5 Archiving and restoring a greenhouse
+
+**Archive** a greenhouse when it is temporarily or permanently out of service but you want to preserve its observation history:
+
+1. Go to `"Kassen"` in the navigation.
+2. Either click `"Archiveren"` on the greenhouse's row in the list, **or** open the edit page and click `"Archiveren"` in the **Status** section.
+
+Effect of archiving:
+- The greenhouse disappears from the operator root page and from the root-redirect logic (operators are not sent there automatically).
+- Any operator who scans the archived greenhouse's QR code sees a Dutch message: *"Deze kas is gearchiveerd en niet meer in gebruik. Scan een andere QR-code of neem contact op met de beheerder."* The server returns HTTP 410 (Gone), not 404.
+- The greenhouse remains visible in the admin GUI with a grey `"Gearchiveerd"` badge.
+- All observations linked to the greenhouse remain in the database and are exportable.
+
+**Restore** an archived greenhouse:
+
+1. On the list page, click `"Herstellen"` on the greenhouse's row, **or** open the edit page and click `"Herstellen"` in the Status section.
+
+The greenhouse immediately becomes active again: operators can scan its QR code and record observations.
+
+> **Prefer archiving over deletion.** Deleting a greenhouse is permanent and requires removing all its observations first. Archiving preserves the full history while hiding the greenhouse from operators.
 
 ---
 
