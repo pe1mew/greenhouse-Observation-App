@@ -113,6 +113,7 @@ button.btn-danger:hover  { background: #c0392b; }
   overflow: hidden;
 }
 .tap-list li + li { border-top: 1px solid #2a2a4a; }
+.tap-list form { margin: 0; }
 .tap-list a, .tap-list button {
   display: flex;
   align-items: center;

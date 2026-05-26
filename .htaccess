@@ -5,12 +5,11 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-<DirectoryMatch "^.*(src|views|migrations|lang)$">
-    Require all denied
-</DirectoryMatch>
-
 # ── URL routing: send all requests through index.php ─────────────────────
 RewriteEngine On
+
+# Block direct access to source directories
+RewriteRule ^(src|views|migrations|lang)(/|$) - [F,L]
 
 # Pass through real files and directories (assets, etc.)
 RewriteCond %{REQUEST_FILENAME} !-f

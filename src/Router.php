@@ -2,6 +2,9 @@
 declare(strict_types=1);
 namespace GreenhouseObs;
 
+use GreenhouseObs\UserController;
+use GreenhouseObs\UserSession;
+
 class Router
 {
     private array $cfg;
@@ -90,33 +93,34 @@ class Router
 
     private function dispatchGreenhouse(string $method, string $ghId, string $sub): void
     {
-        // Verify this greenhouse exists before routing deeper
         $stmt = $this->db->prepare('SELECT id, name FROM greenhouse WHERE id = ?');
         $stmt->execute([$ghId]);
-        $gh = $stmt->fetch();
+        $gh = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$gh) {
-            // Unknown greenhouse ID — not in DB yet (FR-GH-080 shape)
             $this->send404();
             return;
         }
 
-        // TODO: implement user-side handlers in next step
-        http_response_code(200);
-        render('placeholder', [
-            'message' => "Kas {$gh['name']} ({$ghId}) — gebruikersinterface in uitvoering.",
-        ]);
+        (new UserController($this->cfg, $this->db, $this->basePath))
+            ->dispatch($method, $ghId, $sub, $gh);
     }
 
     // ── Root dispatcher ───────────────────────────────────────────────────
 
     private function handleRoot(): void
     {
-        // TODO: implement FR-GH-080 (scan-QR page / redirect) in next step
+        $user = UserSession::resolve($this->db);
+        if ($user && !empty($user['current_greenhouse_id'])) {
+            redirect($this->basePath . '/' . $user['current_greenhouse_id'] . '/');
+            return;
+        }
+
+        $stmt = $this->db->query('SELECT id, name FROM greenhouse ORDER BY name');
+        $greenhouses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
         http_response_code(200);
-        render('placeholder', [
-            'message' => lang('greenhouse_scan_qr'),
-        ]);
+        render('user/root', ['greenhouses' => $greenhouses]);
     }
 
     // ── Admin dispatcher ──────────────────────────────────────────────────
