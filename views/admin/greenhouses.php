@@ -6,7 +6,7 @@
   <?php else: ?>
     <table class="data-table">
       <thead>
-        <tr><th>ID</th><th>Naam</th><th>Locatie</th><th>Waarnemingen</th><th></th></tr>
+        <tr><th>ID</th><th>Naam</th><th>Locatie</th><th>Waarnemingen</th><th>Status</th><th></th></tr>
       </thead>
       <tbody>
         <?php foreach ($greenhouses as $gh): ?>
@@ -15,7 +15,8 @@
             <td><?= e($gh['name']) ?></td>
             <td><?= e($gh['location'] ?? '—') ?></td>
             <td><?= (int)$gh['obs_count'] ?></td>
-            <td style="display:flex;gap:.25rem;flex-wrap:wrap">
+            <td><?= $gh['active_flag'] ? '<span class="badge online">Actief</span>' : '<span class="badge offline">Gearchiveerd</span>' ?></td>
+            <td style="white-space:nowrap;display:flex;gap:.25rem">
               <button class="btn btn-sm"
                       data-gh-id="<?= e($gh['id']) ?>"
                       data-gh-name="<?= e($gh['name']) ?>"
@@ -23,6 +24,14 @@
                 QR
               </button>
               <a href="<?= e($adminBase) ?>/greenhouses/<?= e($gh['id']) ?>" class="btn btn-sm">Bewerken</a>
+              <form method="post"
+                    action="<?= e($adminBase) ?>/greenhouses/<?= e($gh['id']) ?>/archive"
+                    style="margin:0">
+                <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+                <button type="submit" class="btn btn-sm">
+                  <?= $gh['active_flag'] ? e(lang('archive')) : e(lang('restore')) ?>
+                </button>
+              </form>
             </td>
           </tr>
         <?php endforeach; ?>

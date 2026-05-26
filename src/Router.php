@@ -100,12 +100,22 @@ class Router
 
     private function dispatchGreenhouse(string $method, string $ghId, string $sub): void
     {
-        $stmt = $this->db->prepare('SELECT id, name FROM greenhouse WHERE id = ?');
+        $stmt = $this->db->prepare('SELECT id, name, active_flag FROM greenhouse WHERE id = ?');
         $stmt->execute([$ghId]);
         $gh = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$gh) {
             $this->send404();
+            return;
+        }
+
+        if (!(int)$gh['active_flag']) {
+            http_response_code(410);
+            render('user/root', [
+                'greenhouses' => [],
+                'showList'    => false,
+                'archivedMsg' => lang('greenhouse_is_archived'),
+            ]);
             return;
         }
 
@@ -119,15 +129,25 @@ class Router
     {
         $user = UserSession::resolve($this->db);
         if ($user && !empty($user['current_greenhouse_id'])) {
-            redirect($this->basePath . '/' . $user['current_greenhouse_id'] . '/');
-            return;
+            // Only redirect to the stored greenhouse if it is still active
+            $activeCheck = $this->db->prepare(
+                'SELECT id FROM greenhouse WHERE id = ? AND active_flag = 1'
+            );
+            $activeCheck->execute([$user['current_greenhouse_id']]);
+            if ($activeCheck->fetch()) {
+                redirect($this->basePath . '/' . $user['current_greenhouse_id'] . '/');
+                return;
+            }
         }
 
-        $count = (int)$this->db->query('SELECT COUNT(*) FROM greenhouse')->fetchColumn();
+        $count = (int)$this->db->query(
+            'SELECT COUNT(*) FROM greenhouse WHERE active_flag = 1'
+        )->fetchColumn();
         $greenhouses = [];
         if ($count < 5) {
-            $greenhouses = $this->db->query('SELECT id, name FROM greenhouse ORDER BY name')
-                                    ->fetchAll(\PDO::FETCH_ASSOC);
+            $greenhouses = $this->db->query(
+                'SELECT id, name FROM greenhouse WHERE active_flag = 1 ORDER BY name'
+            )->fetchAll(\PDO::FETCH_ASSOC);
         }
 
         http_response_code(200);

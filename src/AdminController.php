@@ -80,6 +80,10 @@ class AdminController
             $this->handleGreenhouseQr($m[1]);
             return;
         }
+        if (preg_match('#^/greenhouses/([0-9A-F]{4})/archive$#', $sub, $m)) {
+            $this->handleGreenhouseArchive($method, $m[1], $csrf);
+            return;
+        }
         if (preg_match('#^/greenhouses/([0-9A-F]{4})/delete$#', $sub, $m)) {
             $this->handleGreenhouseDelete($method, $m[1], $csrf);
             return;
@@ -278,9 +282,9 @@ class AdminController
     private function handleGreenhouses(string $method, string $csrf): void
     {
         $greenhouses = $this->db->query(
-            'SELECT g.id, g.name, g.location,
+            'SELECT g.id, g.name, g.location, g.active_flag,
                     (SELECT COUNT(*) FROM observation WHERE greenhouse_id = g.id) AS obs_count
-             FROM greenhouse g ORDER BY g.name'
+             FROM greenhouse g ORDER BY g.active_flag DESC, g.name'
         )->fetchAll();
 
         $this->adminRender('greenhouses', [
@@ -346,7 +350,7 @@ class AdminController
         }
 
         $error  = null;
-        $values = ['id' => $gh['id'], 'name' => $gh['name'], 'location' => $gh['location'] ?? '', 'notes' => $gh['notes'] ?? ''];
+        $values = ['id' => $gh['id'], 'name' => $gh['name'], 'location' => $gh['location'] ?? '', 'notes' => $gh['notes'] ?? '', 'active_flag' => (int)$gh['active_flag']];
 
         if ($method === 'POST') {
             if (!AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
@@ -404,6 +408,22 @@ class AdminController
             return;
         }
         $this->db->prepare('DELETE FROM greenhouse WHERE id = ?')->execute([$ghId]);
+        redirect($this->adminUrl . '/greenhouses');
+    }
+
+    private function handleGreenhouseArchive(string $method, string $ghId, string $csrf): void
+    {
+        if ($method !== 'POST' || !AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+            redirect($this->adminUrl . '/greenhouses/' . $ghId);
+            return;
+        }
+        $row = $this->db->prepare('SELECT active_flag FROM greenhouse WHERE id = ?');
+        $row->execute([$ghId]);
+        $row = $row->fetch();
+        if ($row) {
+            $this->db->prepare('UPDATE greenhouse SET active_flag = ? WHERE id = ?')
+                     ->execute([$row['active_flag'] ? 0 : 1, $ghId]);
+        }
         redirect($this->adminUrl . '/greenhouses');
     }
 

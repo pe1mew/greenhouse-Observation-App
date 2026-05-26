@@ -4,7 +4,9 @@ $showPrivacy = true;
 require APP_ROOT . '/views/layout/header.php';
 ?>
 <section>
-  <?php if (empty($greenhouses) && !$showList): ?>
+  <?php if (!empty($archivedMsg)): ?>
+    <p class="hint"><?= e($archivedMsg) ?></p>
+  <?php elseif (empty($greenhouses) && !$showList): ?>
     <p><?= e(lang('greenhouse_scan_qr')) ?></p>
   <?php elseif (empty($greenhouses)): ?>
     <p><?= e(lang('greenhouse_none_configured')) ?></p>

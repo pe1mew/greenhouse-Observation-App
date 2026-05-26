@@ -39,6 +39,19 @@
 
 <?php if (!$isNew): ?>
 <section>
+  <h2>Status</h2>
+  <p class="hint" style="margin-bottom:.5rem">
+    <?= $values['active_flag'] ? 'Deze kas is <strong>actief</strong> en zichtbaar voor gebruikers.' : 'Deze kas is <strong>gearchiveerd</strong> en niet meer zichtbaar voor gebruikers.' ?>
+  </p>
+  <form method="post" action="<?= e($adminBase) ?>/greenhouses/<?= e($ghId) ?>/archive" style="margin:0">
+    <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+    <button type="submit" class="btn <?= $values['active_flag'] ? '' : 'btn-sm' ?>">
+      <?= $values['active_flag'] ? e(lang('archive')) : e(lang('restore')) ?>
+    </button>
+  </form>
+</section>
+
+<section>
   <h2>QR-code</h2>
   <p class="hint" style="margin-bottom:.5rem">URL: <code><?= e($qrUrl) ?></code></p>
   <img src="<?= e($adminBase) ?>/greenhouses/<?= e($ghId) ?>/qr"
