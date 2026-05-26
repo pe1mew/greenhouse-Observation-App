@@ -102,6 +102,10 @@ class AdminController
             $this->handleCategoryArchive($method, (int)$m[1], $csrf);
             return;
         }
+        if (preg_match('#^/taxonomy/(\d+)/move$#', $sub, $m)) {
+            $this->handleCategoryMove($method, (int)$m[1], $csrf);
+            return;
+        }
         if (preg_match('#^/taxonomy/(\d+)/edit$#', $sub, $m)) {
             $this->handleCategoryEdit($method, (int)$m[1], $csrf);
             return;
@@ -112,6 +116,10 @@ class AdminController
         }
         if (preg_match('#^/taxonomy/(\d+)/tags/(\d+)/archive$#', $sub, $m)) {
             $this->handleTagArchive($method, (int)$m[1], (int)$m[2], $csrf);
+            return;
+        }
+        if (preg_match('#^/taxonomy/(\d+)/tags/(\d+)/move$#', $sub, $m)) {
+            $this->handleTagMove($method, (int)$m[1], (int)$m[2], $csrf);
             return;
         }
         if (preg_match('#^/taxonomy/(\d+)/tags/(\d+)/edit$#', $sub, $m)) {
@@ -489,6 +497,74 @@ class AdminController
                      ->execute([$row['active_flag'] ? 0 : 1, $catId]);
         }
         redirect($this->adminUrl . '/taxonomy');
+    }
+
+    private function handleCategoryMove(string $method, int $catId, string $csrf): void
+    {
+        if ($method !== 'POST' || !AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+            redirect($this->adminUrl . '/taxonomy');
+            return;
+        }
+        $direction = $_POST['direction'] ?? '';
+        $row = $this->db->prepare('SELECT sort_order FROM category WHERE id = ?');
+        $row->execute([$catId]);
+        $current = $row->fetch();
+        if (!$current) {
+            redirect($this->adminUrl . '/taxonomy');
+            return;
+        }
+        $currentOrd = (int)$current['sort_order'];
+
+        if ($direction === 'up') {
+            $neighbor = $this->db->prepare(
+                'SELECT id, sort_order FROM category WHERE sort_order < ? ORDER BY sort_order DESC LIMIT 1'
+            );
+        } else {
+            $neighbor = $this->db->prepare(
+                'SELECT id, sort_order FROM category WHERE sort_order > ? ORDER BY sort_order ASC LIMIT 1'
+            );
+        }
+        $neighbor->execute([$currentOrd]);
+        $other = $neighbor->fetch();
+        if ($other) {
+            $this->db->prepare('UPDATE category SET sort_order = ? WHERE id = ?')->execute([(int)$other['sort_order'], $catId]);
+            $this->db->prepare('UPDATE category SET sort_order = ? WHERE id = ?')->execute([$currentOrd, (int)$other['id']]);
+        }
+        redirect($this->adminUrl . '/taxonomy');
+    }
+
+    private function handleTagMove(string $method, int $catId, int $tagId, string $csrf): void
+    {
+        if ($method !== 'POST' || !AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+            redirect($this->adminUrl . '/taxonomy/' . $catId);
+            return;
+        }
+        $direction = $_POST['direction'] ?? '';
+        $row = $this->db->prepare('SELECT sort_order FROM tag WHERE id = ? AND category_id = ?');
+        $row->execute([$tagId, $catId]);
+        $current = $row->fetch();
+        if (!$current) {
+            redirect($this->adminUrl . '/taxonomy/' . $catId);
+            return;
+        }
+        $currentOrd = (int)$current['sort_order'];
+
+        if ($direction === 'up') {
+            $neighbor = $this->db->prepare(
+                'SELECT id, sort_order FROM tag WHERE category_id = ? AND sort_order < ? ORDER BY sort_order DESC LIMIT 1'
+            );
+        } else {
+            $neighbor = $this->db->prepare(
+                'SELECT id, sort_order FROM tag WHERE category_id = ? AND sort_order > ? ORDER BY sort_order ASC LIMIT 1'
+            );
+        }
+        $neighbor->execute([$catId, $currentOrd]);
+        $other = $neighbor->fetch();
+        if ($other) {
+            $this->db->prepare('UPDATE tag SET sort_order = ? WHERE id = ?')->execute([(int)$other['sort_order'], $tagId]);
+            $this->db->prepare('UPDATE tag SET sort_order = ? WHERE id = ?')->execute([$currentOrd, (int)$other['id']]);
+        }
+        redirect($this->adminUrl . '/taxonomy/' . $catId);
     }
 
     private function handleCategoryEdit(string $method, int $catId, string $csrf): void

@@ -3,11 +3,23 @@
   <h2>Categorieën</h2>
   <table class="data-table">
     <thead>
-      <tr><th>Interne sleutel</th><th>Naam</th><th>Tags (actief)</th><th>Status</th><th></th></tr>
+      <tr><th>Volgorde</th><th>Interne sleutel</th><th>Naam</th><th>Tags (actief)</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
-      <?php foreach ($categories as $cat): ?>
+      <?php foreach ($categories as $i => $cat): ?>
         <tr>
+          <td style="white-space:nowrap">
+            <form method="post" action="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/move" style="display:inline;margin:0">
+              <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+              <input type="hidden" name="direction" value="up">
+              <button type="submit" class="btn btn-sm" <?= $i === 0 ? 'disabled' : '' ?> title="Omhoog">↑</button>
+            </form>
+            <form method="post" action="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/move" style="display:inline;margin:0">
+              <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+              <input type="hidden" name="direction" value="down">
+              <button type="submit" class="btn btn-sm" <?= $i === count($categories) - 1 ? 'disabled' : '' ?> title="Omlaag">↓</button>
+            </form>
+          </td>
           <td><code><?= e($cat['internal_key']) ?></code></td>
           <td><?= e($cat['display_name']) ?></td>
           <td><?= (int)$cat['tag_count'] ?></td>
