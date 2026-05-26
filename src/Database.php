@@ -93,6 +93,24 @@ class Database
                 ['maint_window_check',  'Raaminspectie'],
                 ['maint_other',         'Overig onderhoud'],
             ]],
+            ['temperature',   'Temperatuur', [
+                ['heat_stress',    'Hittestress'],
+                ['cold_damage',    'Koudeschade'],
+                ['frost_damage',   'Vorstschade'],
+                ['day_night_diff', 'Groot dag-nachtverschil'],
+            ]],
+            ['humidity_high',  'Luchtvochtigheid — te hoog', [
+                ['condensation', 'Condensatie op gewas'],
+                ['mold',         'Schimmelvorming'],
+                ['wet_rot',      'Natrot / stengelrot'],
+                ['fruit_spot',   'Smet op vruchten'],
+            ]],
+            ['humidity_low',   'Luchtvochtigheid — te laag', [
+                ['wilting',            'Verwelking'],
+                ['leaf_curl_down',     'Bladkrul omlaag'],
+                ['flower_fruit_dry',   'Verdroging bloem/vrucht'],
+                ['dry_leaf_edges',     'Droge bladranden'],
+            ]],
         ];
 
         $stmtCat = $db->prepare(
