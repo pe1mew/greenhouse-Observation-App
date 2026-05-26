@@ -50,6 +50,16 @@ class Router
             return;
         }
 
+        // ── Error pages (TDS-UI-150 — nginx error_page targets) ───────
+        // nginx maps 413 (and optionally 429, 404, 403, 500) here so the
+        // operator sees the Dutch error template instead of a bare nginx
+        // page. The path comes in as /error/413 etc. (sub-path prefix
+        // already stripped above).
+        if (preg_match('#^/error/(\d{3})$#', $path, $m)) {
+            $this->handleError((int)$m[1]);
+            return;
+        }
+
         // ── Root (no greenhouse selected) ─────────────────────────────
         if ($path === '/' || $path === '') {
             $this->handleRoot();
@@ -187,6 +197,26 @@ class Router
             'statusCode' => 404,
             'heading'    => lang('error_404_title'),
             'body'       => lang('error_404_body'),
+        ]);
+    }
+
+    /**
+     * Renders the Dutch error template for a given HTTP status code.
+     * Used by nginx's error_page directive (TDS-UI-150) so the operator
+     * sees friendly text instead of nginx's default page.
+     */
+    private function handleError(int $code): void
+    {
+        static $known = [403, 404, 413, 429, 500];
+        if (!in_array($code, $known, true)) {
+            $this->send404();
+            return;
+        }
+        http_response_code($code);
+        render('error', [
+            'statusCode' => $code,
+            'heading'    => lang("error_{$code}_title"),
+            'body'       => lang("error_{$code}_body"),
         ]);
     }
 }

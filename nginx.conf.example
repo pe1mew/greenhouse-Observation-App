@@ -1,4 +1,10 @@
 # Greenhouse Observation App — nginx configuration example
+#
+# Two deploy patterns are shown:
+#   1. Apex / dedicated subdomain (the main `server { ... }` block below)
+#   2. Sub-path mount under an existing site (see the §"Sub-path mount" note
+#      at the bottom — adjustments needed for that case)
+#
 # Adjust server_name, root, and PHP socket path to your deployment.
 # See TDS §12 for deployment notes.
 
@@ -7,6 +13,11 @@ server {
     server_name obs.example.com;
     root /var/www/html/greenhouse;
     index index.php;
+
+    # Upload size — must accommodate TDS-STO-060 (8 MB photo) + multipart
+    # form overhead. Set at server level so it applies to the initial
+    # request body read, not just to `.php`-matching rewrites afterwards.
+    client_max_body_size 12M;
 
     # Route all requests through index.php (mirrors .htaccess RewriteRule)
     location / {
@@ -18,24 +29,79 @@ server {
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
-        # Must match TDS-STO-060 upload limit (8 MB file + form overhead)
-        client_max_body_size 12M;
     }
 
-    # Block direct access to source, templates, migrations, and config
-    location ~ ^/(src|views|migrations|lang|composer\.(json|lock)|config\.php|template_config\.php)(/.*)? {
+    # Block direct access to source, templates, migrations, vendor, config,
+    # and the docker / git plumbing.
+    location ~ ^/(src|views|migrations|lang|vendor|design|manual|tests|composer\.(json|lock)|config\.php|template_config\.php|Dockerfile|docker-compose\.yml|\.dockerignore)(/.*)? {
         deny all;
         return 404;
     }
 
-    # Block dotfiles
-    location ~ /\. {
+    # Block dotfiles (allow .well-known/ for ACME, etc.)
+    location ~ /\.(?!well-known) {
         deny all;
         return 404;
     }
 
-    # Intercept 413 (payload too large) before PHP runs and serve the
-    # Dutch error template instead of nginx's default page (TDS-UI-150).
-    # Requires proxy_intercept_errors on when behind a reverse proxy.
+    # Intercept 413 (payload too large) and route it to the app's Dutch
+    # error template (TDS-UI-150). The Router's /error/<code> handler
+    # (added in src/Router.php) renders the existing error view.
     error_page 413 /error/413;
 }
+
+# ─────────────────────────────────────────────────────────────────────────
+# Sub-path mount (e.g. https://example.com/webapp/) — additions / changes
+# ─────────────────────────────────────────────────────────────────────────
+#
+# When the app is mounted under an existing site at a sub-path instead of
+# its own host, drop the `server { ... }` above and add the following
+# block INSIDE the existing site's HTTPS server { ... } block:
+#
+#   # Canonicalise the bare /webapp (no slash) to /webapp/
+#   location = /webapp {
+#       return 301 /webapp/;
+#   }
+#
+#   location ^~ /webapp/ {
+#       alias /path/to/greenhouse-Observation-App/;
+#       index index.php;
+#       client_max_body_size 12M;      # required at this scope for uploads
+#
+#       location ~ ^/webapp/(src|views|migrations|lang|vendor|design|manual|tests)(/|$) {
+#           return 404;
+#       }
+#       location ~ ^/webapp/(config|template_config)\.php$ {
+#           return 404;
+#       }
+#       location ~ ^/webapp/(composer\.(json|lock)|Dockerfile|docker-compose\.yml)$ {
+#           return 404;
+#       }
+#       location ~ /webapp/\.(?!well-known) {
+#           return 404;
+#       }
+#
+#       try_files $uri $uri/ @webapp_php;
+#
+#       location ~ ^/webapp/.+\.php(/.*)?$ {
+#           fastcgi_pass 127.0.0.1:9083;   # or the FPM container/socket
+#           fastcgi_split_path_info ^/webapp(/.+\.php)(/.*)?$;
+#           include fastcgi_params;
+#           # SCRIPT_NAME must carry the /webapp prefix so the Router computes
+#           # basePath correctly (src/Router.php uses dirname(SCRIPT_NAME)).
+#           fastcgi_param SCRIPT_FILENAME /var/www/html$fastcgi_script_name;
+#           fastcgi_param SCRIPT_NAME     /webapp$fastcgi_script_name;
+#           fastcgi_param DOCUMENT_ROOT   /var/www/html;
+#           fastcgi_param PATH_INFO       $fastcgi_path_info;
+#       }
+#   }
+#
+#   location @webapp_php {
+#       rewrite ^/webapp/(.*)$ /webapp/index.php last;
+#   }
+#
+#   error_page 413 /webapp/error/413;
+#
+# The SCRIPT_FILENAME / DOCUMENT_ROOT values reflect the *container's*
+# filesystem view (e.g. /var/www/html via a bind mount), not the host
+# path. Adjust if you're not running PHP in a container.

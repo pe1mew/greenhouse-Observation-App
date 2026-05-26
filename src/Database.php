@@ -54,16 +54,18 @@ class Database
     }
 
     /**
-     * Seed the launch taxonomy if the category table is empty (TDS-STO-130).
+     * Seed the launch taxonomy (TDS-STO-130).
      * Internal keys stay English; display names are Dutch (FR-UI-070).
+     *
+     * Idempotent per-row: uses INSERT OR IGNORE so safe to run on every boot
+     * AND coexists cleanly with migrations that pre-populate other categories
+     * (e.g. migration 0002 climate taxonomy). The previous all-or-nothing
+     * guard (count > 0 → return) caused the launch seed to be skipped
+     * whenever any migration had already inserted a category, leaving the
+     * five [OS §3] strategic categories absent from fresh installs.
      */
     public static function seedTaxonomy(\PDO $db): void
     {
-        $count = (int)$db->query('SELECT COUNT(*) FROM category')->fetchColumn();
-        if ($count > 0) {
-            return;
-        }
-
         $taxonomy = [
             ['wellbeing',      'Welzijnscheck', [
                 ['all_good', 'Alles goed'],
@@ -114,18 +116,23 @@ class Database
         ];
 
         $stmtCat = $db->prepare(
-            'INSERT INTO category (internal_key, display_name, active_flag, sort_order)
+            'INSERT OR IGNORE INTO category (internal_key, display_name, active_flag, sort_order)
              VALUES (:key, :name, 1, :ord)'
         );
+        // SELECT-by-key after INSERT OR IGNORE so we get the id whether the row
+        // was just inserted (lastInsertId would work) OR already existed
+        // (lastInsertId returns 0 after a no-op IGNORE).
+        $stmtCatId = $db->prepare('SELECT id FROM category WHERE internal_key = :key');
         $stmtTag = $db->prepare(
-            'INSERT INTO tag (category_id, internal_key, display_name, active_flag, sort_order)
+            'INSERT OR IGNORE INTO tag (category_id, internal_key, display_name, active_flag, sort_order)
              VALUES (:cat_id, :key, :name, 1, :ord)'
         );
 
         $catOrd = 0;
         foreach ($taxonomy as [$catKey, $catName, $tags]) {
             $stmtCat->execute([':key' => $catKey, ':name' => $catName, ':ord' => $catOrd++]);
-            $catId  = (int)$db->lastInsertId();
+            $stmtCatId->execute([':key' => $catKey]);
+            $catId  = (int)$stmtCatId->fetchColumn();
             $tagOrd = 0;
             foreach ($tags as [$tagKey, $tagName]) {
                 $stmtTag->execute([
