@@ -47,7 +47,7 @@ return [
     'greenhouse_none_configured'    => 'Er is nog geen kas geconfigureerd. Neem contact op met de beheerder.',
 
     // ── Recording flow ───────────────────────────────────────────────
-    'observation_saved'             => '✓ Opgeslagen',
+    'observation_saved'             => 'Opgeslagen',
     'observation_not_found'         => 'Waarneming niet gevonden.',
     'observation_not_owner'         => 'U hebt geen toegang tot deze waarneming.',
     'observation_read_only'         => 'Alleen-lezen na :hours uur.',

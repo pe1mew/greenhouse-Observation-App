@@ -54,7 +54,7 @@
       <tr>
         <th style="text-align:right;padding-right:1rem"><?= e(lang('severity_label')) ?></th>
         <td>
-          <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+          <div class="sev-row" style="max-width:380px">
             <label class="sev-btn"><input type="radio" name="severity" value="" <?= $obs['severity'] === null ? 'checked' : '' ?>><span>—</span></label>
             <?php for ($i = 1; $i <= 5; $i++): ?>
               <label class="sev-btn"><input type="radio" name="severity" value="<?= $i ?>" <?= (int)($obs['severity'] ?? 0) === $i ? 'checked' : '' ?>><span><?= $i ?></span></label>

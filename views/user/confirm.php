@@ -7,7 +7,7 @@ require APP_ROOT . '/views/layout/header.php';
 ?>
 <section style="text-align:center;padding:2rem 1rem">
   <p style="font-size:3rem;line-height:1;margin-bottom:.5rem">✓</p>
-  <p style="font-size:1.1rem;font-weight:600"><?= e(lang('observation_saved')) ?></p>
+  <p style="font-size:1.6rem;font-weight:600"><?= e(lang('observation_saved')) ?></p>
   <p class="hint" style="margin-top:.5rem">
     <?= e($obs['cat_name']) ?> — <?= e($obs['tag_name']) ?>
   </p>
@@ -23,9 +23,9 @@ require APP_ROOT . '/views/layout/header.php';
       <input type="datetime-local" name="ts" value="<?= e($tsDefault) ?>"
              max="<?= e($tsDefault) ?>" style="flex:1">
     </div>
-    <div class="row" style="align-items:center">
-      <label><?= e(lang('severity_label')) ?></label>
-      <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+    <div style="margin-bottom:.5rem">
+      <label style="display:block;color:var(--muted);font-size:.85rem;margin-bottom:.35rem"><?= e(lang('severity_label')) ?></label>
+      <div class="sev-row">
         <label class="sev-btn"><input type="radio" name="severity" value="" checked><span>—</span></label>
         <?php for ($i = 1; $i <= 5; $i++): ?>
           <label class="sev-btn"><input type="radio" name="severity" value="<?= $i ?>"><span><?= $i ?></span></label>
