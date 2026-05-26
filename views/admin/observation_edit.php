@@ -74,12 +74,9 @@
           <?php if ($photoUrl): ?>
             <img src="<?= e($photoUrl) ?>" alt="foto"
                  style="max-width:300px;border-radius:var(--radius);display:block;margin-bottom:.4rem">
-            <form method="post"
-                  action="<?= e($adminBase) ?>/observations/<?= (int)$obs['id'] ?>/photo/delete"
-                  style="display:inline">
-              <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
-              <button type="submit" class="btn btn-danger btn-sm">Foto verwijderen</button>
-            </form>
+            <p class="hint" style="margin-top:.25rem;font-size:.8rem">
+              Foto verwijderen kan met de knop onder dit formulier.
+            </p>
           <?php else: ?>
             <input type="file" name="photo" accept="image/*" style="color:var(--fg)">
             <p class="hint" style="margin-top:.25rem">JPEG, PNG of WebP · max 8 MB</p>
@@ -92,6 +89,16 @@
     <a href="<?= e($adminBase) ?>/observations/<?= (int)$obs['id'] ?>"
        class="btn btn-sm" style="margin-left:.5rem"><?= e(lang('cancel')) ?></a>
   </form>
+
+  <?php if ($photoUrl): ?>
+  <form method="post"
+        action="<?= e($adminBase) ?>/observations/<?= (int)$obs['id'] ?>/photo/delete"
+        style="margin-top:1rem"
+        onsubmit="return confirm('Foto verwijderen van waarneming #<?= (int)$obs['id'] ?>?')">
+    <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
+    <button type="submit" class="btn btn-danger btn-sm">Foto verwijderen</button>
+  </form>
+  <?php endif; ?>
 </section>
 
 <script>

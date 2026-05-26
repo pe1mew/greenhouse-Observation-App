@@ -61,31 +61,86 @@ $homeUrl = app_url($ghId . '/');
       <label><?= e(lang('note_label')) ?></label>
       <textarea name="note" rows="3" style="width:100%;box-sizing:border-box"><?= e($obs['note'] ?? '') ?></textarea>
     </div>
-    <?php if (!$photoUrl): ?>
-    <div class="row" style="flex-direction:column;align-items:flex-start">
-      <label style="margin-bottom:.25rem">Foto</label>
-      <img id="photo-preview" src="" alt=""
-           style="display:none;max-width:100%;border-radius:var(--radius);margin-bottom:.4rem">
-      <input type="file" name="photo" id="photo-file" accept="image/*"
-             style="color:var(--fg)">
-      <p class="hint" style="margin-top:.25rem">JPEG, PNG of WebP · max 8 MB</p>
-    </div>
-    <script>
-      document.getElementById('photo-file').addEventListener('change', function () {
-        var file = this.files[0];
-        if (!file) return;
-        var preview = document.getElementById('photo-preview');
-        var reader  = new FileReader();
-        reader.onload = function (e) {
-          preview.src   = e.target.result;
-          preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      });
-    </script>
-    <?php endif; ?>
     <button type="submit" class="primary-cta cta-blue" style="margin-top:.5rem"><?= e(lang('save')) ?></button>
   </form>
+
+  <?php if (!$photoUrl): ?>
+  <!--
+    Photo input is OUTSIDE the edit form so the save above only handles
+    note/severity. Auto-upload (FR-REC-040, TDS-UI-160) fires a separate
+    POST to /<gh-id>/observation/<id>/photo on `change`.
+  -->
+  <div style="margin-top:1rem;display:flex;flex-direction:column;align-items:flex-start">
+    <label style="margin-bottom:.25rem">Foto</label>
+    <img id="photo-preview" src="" alt=""
+         style="display:none;max-width:100%;border-radius:var(--radius);margin-bottom:.4rem">
+    <input type="file" id="photo-file" accept="image/*"
+           style="color:var(--fg)">
+    <p id="photo-status" class="hint" style="margin:.25rem 0;font-size:.85rem"></p>
+    <p class="hint" style="margin-top:.1rem">JPEG, PNG of WebP · max 8 MB</p>
+  </div>
+  <script>
+  (function () {
+    var photoUrl  = <?= json_encode(app_url($ghId . '/observation/' . $obs['id'] . '/photo'), JSON_UNESCAPED_SLASHES) ?>;
+    var csrfToken = <?= json_encode($user['csrf_token']) ?>;
+    var msgs = {
+      uploading: <?= json_encode(lang('photo_uploading')) ?>,
+      saved:     <?= json_encode(lang('photo_saved')) ?>,
+      failed:    <?= json_encode(lang('photo_upload_failed')) ?>,
+      conn:      <?= json_encode(lang('photo_connection_error')) ?>
+    };
+
+    var fileInput = document.getElementById('photo-file');
+    var preview   = document.getElementById('photo-preview');
+    var status    = document.getElementById('photo-status');
+
+    fileInput.addEventListener('change', function () {
+      if (!this.files.length) return;
+      var file = this.files[0];
+
+      // Local preview (instant UX)
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src           = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+
+      // Auto-upload (TDS-UI-160)
+      status.textContent = msgs.uploading;
+      status.style.color = '';
+
+      var fd = new FormData();
+      fd.append('photo', file);
+      fd.append('_csrf', csrfToken);
+
+      fetch(photoUrl, {
+        method: 'POST',
+        body:   fd,
+        headers: { 'X-CSRF-Token': csrfToken },
+        credentials: 'same-origin'
+      })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        if (res.ok && res.data.ok) {
+          status.textContent = res.data.message || msgs.saved;
+          status.style.color = 'var(--ok, #2a8c4a)';
+          // Reload after a moment so the page now shows the photo
+          // in its proper place + offers the delete button.
+          setTimeout(function () { window.location.reload(); }, 800);
+        } else {
+          status.textContent = (res.data && res.data.error) ? res.data.error : msgs.failed;
+          status.style.color = 'var(--danger, #c0392b)';
+        }
+      })
+      .catch(function () {
+        status.textContent = msgs.conn;
+        status.style.color = 'var(--danger, #c0392b)';
+      });
+    });
+  })();
+  </script>
+  <?php endif; ?>
 </section>
 
 <section style="margin-top:.5rem">

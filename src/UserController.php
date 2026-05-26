@@ -104,11 +104,19 @@ class UserController
             return;
         }
 
-        // /<gh-id>/observation/<obs-id>/photo  (GET only)
+        // /<gh-id>/observation/<obs-id>/photo
+        //   GET  → serve the stored photo (existing behaviour)
+        //   POST → auto-upload endpoint (FR-REC-040 enhancement: photo
+        //          uploads as soon as the file input fires `change`,
+        //          no explicit save step required). Returns JSON.
         if (preg_match('#^/observation/(\d+)/photo$#', $sub, $m)) {
             if (!$user) {
                 http_response_code(404);
                 exit;
+            }
+            if ($method === 'POST') {
+                $this->uploadObsPhoto($ghId, $user, (int)$m[1]);
+                return;
             }
             $this->servePhoto($ghId, $user, (int)$m[1]);
             return;
@@ -594,6 +602,87 @@ class UserController
         }
 
         PhotoHandler::serve($this->cfg['photo_root'], (string)$obs['photo_path']);
+    }
+
+    /**
+     * Auto-upload endpoint (FR-REC-040 enhancement, TDS-UI-160).
+     * Returns JSON; consumed by client-side fetch() from confirm.php (M5)
+     * and observation.php (M8). CSRF-protected like the rest of the
+     * user-side write endpoints (TDS-AUTH-100).
+     */
+    private function uploadObsPhoto(string $ghId, array $user, int $obsId): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Cache-Control: no-store');
+
+        // CSRF — accept either the form field or the X-CSRF-Token header
+        // (TDS-AUTH-100 allows both for AJAX requests)
+        $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        if (!hash_equals((string)$user['csrf_token'], (string)$token)) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => lang('csrf_invalid')]);
+            return;
+        }
+
+        // Verify ownership and that the observation exists in this greenhouse
+        $stmt = $this->db->prepare(
+            'SELECT id, user_id, ts, photo_path FROM observation
+             WHERE id = ? AND greenhouse_id = ?'
+        );
+        $stmt->execute([$obsId, $ghId]);
+        $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$obs || (int)$obs['user_id'] !== (int)$user['id']) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => lang('observation_not_found')]);
+            return;
+        }
+
+        // Enforce the edit window (FR-REV-040). A photo cannot be added or
+        // replaced once the observation is read-only.
+        if (!$this->isEditable((string)$obs['ts'], (int)$this->cfg['edit_window_hours'])) {
+            http_response_code(403);
+            echo json_encode([
+                'ok'    => false,
+                'error' => str_replace(':hours', (string)$this->cfg['edit_window_hours'], lang('observation_read_only')),
+            ]);
+            return;
+        }
+
+        // Validate the upload
+        $upload = $_FILES['photo'] ?? null;
+        if (!$upload || $upload['error'] !== UPLOAD_ERR_OK) {
+            $code = $upload['error'] ?? null;
+            $key  = in_array($code, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+                      ? 'photo_too_large' : 'photo_upload_failed';
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => lang($key)]);
+            return;
+        }
+
+        $photoError = PhotoHandler::validate($upload);
+        if ($photoError) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => lang($photoError)]);
+            return;
+        }
+
+        // Replace any previous photo (synchronous unlink — FR-REC-100)
+        if (!empty($obs['photo_path'])) {
+            PhotoHandler::delete($this->cfg['photo_root'], (string)$obs['photo_path']);
+        }
+        $stored = PhotoHandler::store($upload, $this->cfg['photo_root'], $obsId);
+
+        $this->db->prepare(
+            'UPDATE observation SET photo_path = ?, updated_at = ? WHERE id = ?'
+        )->execute([$stored, utc_now(), $obsId]);
+
+        http_response_code(200);
+        echo json_encode([
+            'ok'        => true,
+            'photo_url' => app_url($ghId . '/observation/' . $obsId . '/photo'),
+            'message'   => lang('photo_saved'),
+        ]);
     }
 
     private function deleteObsPhoto(string $method, string $ghId, array $user, int $obsId): void

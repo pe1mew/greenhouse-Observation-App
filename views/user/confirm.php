@@ -40,14 +40,21 @@ require APP_ROOT . '/views/layout/header.php';
     </div>
   </section>
 
-  <input type="file" name="photo" id="photo-input"
+  <!--
+    Photo input is OUTSIDE the form so the form submit (note/severity/ts)
+    doesn't include the file. Auto-upload (FR-REC-040, TDS-UI-160) fires
+    a separate POST to /<gh-id>/observation/<id>/photo on `change`, so
+    the photo is committed the moment it's picked — no save step needed.
+  -->
+  <input type="file" id="photo-input"
          accept="image/*" capture="environment" style="display:none">
 
   <div id="btn-after" style="display:none">
     <img id="photo-preview" src="" alt="preview"
          style="max-width:100%;border-radius:var(--radius);margin-bottom:.5rem;display:block">
+    <p id="photo-status" class="hint" style="margin:.25rem 0;font-size:.85rem"></p>
     <button type="button" class="primary-cta cta-blue" onclick="retake()">📷 Foto opnieuw maken</button>
-    <button type="submit" class="primary-cta cta-teal" style="margin-top:.5rem"><?= e(lang('save')) ?></button>
+    <button type="submit" class="primary-cta cta-teal" style="margin-top:.5rem"><?= e(lang('done')) ?></button>
   </div>
 
   <div id="btn-initial">
@@ -59,27 +66,74 @@ require APP_ROOT . '/views/layout/header.php';
 </form>
 
 <script>
-  function openCamera() {
-    document.getElementById('photo-input').click();
-  }
+(function () {
+  var photoUrl  = <?= json_encode(app_url($ghId . '/observation/' . $obs['id'] . '/photo'), JSON_UNESCAPED_SLASHES) ?>;
+  var csrfToken = <?= json_encode($user['csrf_token']) ?>;
+  var msgs = {
+    uploading: <?= json_encode(lang('photo_uploading')) ?>,
+    saved:     <?= json_encode(lang('photo_saved')) ?>,
+    failed:    <?= json_encode(lang('photo_upload_failed')) ?>,
+    conn:      <?= json_encode(lang('photo_connection_error')) ?>
+  };
 
-  function retake() {
-    var input = document.getElementById('photo-input');
-    input.value = '';
-    document.getElementById('btn-after').style.display  = 'none';
+  var fileInput = document.getElementById('photo-input');
+  var preview   = document.getElementById('photo-preview');
+  var status    = document.getElementById('photo-status');
+
+  window.openCamera = function () { fileInput.click(); };
+
+  window.retake = function () {
+    fileInput.value = '';
+    document.getElementById('btn-after').style.display   = 'none';
     document.getElementById('btn-initial').style.display = 'block';
-    input.click();
-  }
+    status.textContent = '';
+    status.className   = 'hint';
+    fileInput.click();
+  };
 
-  document.getElementById('photo-input').addEventListener('change', function () {
+  fileInput.addEventListener('change', function () {
     if (!this.files.length) return;
+    var file = this.files[0];
+
+    // Local preview first (instant UX)
     var reader = new FileReader();
     reader.onload = function (e) {
-      document.getElementById('photo-preview').src = e.target.result;
+      preview.src = e.target.result;
       document.getElementById('btn-initial').style.display = 'none';
       document.getElementById('btn-after').style.display   = 'block';
     };
-    reader.readAsDataURL(this.files[0]);
+    reader.readAsDataURL(file);
+
+    // Then auto-upload (FR-REC-040 / TDS-UI-160)
+    status.textContent = msgs.uploading;
+    status.className   = 'hint';
+    status.style.color = '';
+
+    var fd = new FormData();
+    fd.append('photo', file);
+    fd.append('_csrf', csrfToken);
+
+    fetch(photoUrl, {
+      method: 'POST',
+      body:   fd,
+      headers: { 'X-CSRF-Token': csrfToken },
+      credentials: 'same-origin'
+    })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    .then(function (res) {
+      if (res.ok && res.data.ok) {
+        status.textContent = res.data.message || msgs.saved;
+        status.style.color = 'var(--ok, #2a8c4a)';
+      } else {
+        status.textContent = (res.data && res.data.error) ? res.data.error : msgs.failed;
+        status.style.color = 'var(--danger, #c0392b)';
+      }
+    })
+    .catch(function () {
+      status.textContent = msgs.conn;
+      status.style.color = 'var(--danger, #c0392b)';
+    });
   });
+})();
 </script>
 <?php require APP_ROOT . '/views/layout/footer.php'; ?>

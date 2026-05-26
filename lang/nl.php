@@ -86,6 +86,11 @@ return [
     'photo_invalid_type'            => 'Bestandstype wordt niet ondersteund. Gebruik JPEG, PNG of WebP.',
     'photo_heic_unsupported'        => 'HEIC-bestanden worden niet ondersteund op deze server. Deel de foto als JPEG.',
     'photo_dimensions_too_large'    => 'Fotodimensies zijn te groot (maximum 8192 × 8192 pixels).',
+    // ── Photo auto-upload (TDS-UI-160) ───────────────────────────────
+    'photo_uploading'               => 'Bezig met uploaden…',
+    'photo_saved'                   => 'Foto opgeslagen ✓',
+    'photo_upload_failed'           => 'Uploaden mislukt — probeer opnieuw.',
+    'photo_connection_error'        => 'Verbindingsfout — controleer de verbinding en probeer opnieuw.',
 
     // ── Security ─────────────────────────────────────────────────────
     'csrf_invalid'                  => 'Ongeldige formuliertoken. Laad de pagina opnieuw en probeer het nogmaals.',
