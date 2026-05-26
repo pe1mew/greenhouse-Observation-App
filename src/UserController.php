@@ -323,7 +323,9 @@ class UserController
             'gh'     => $gh,
             'ghName' => $gh['name'],
             'handle' => $user['handle'],
+            'user'   => $user,
             'obs'    => $obs,
+            'cfg'    => $this->cfg,
         ]);
     }
 
@@ -393,7 +395,7 @@ class UserController
     private function observation(string $method, string $ghId, array $gh, array $user, int $obsId): void
     {
         $stmt = $this->db->prepare(
-            'SELECT o.id, o.ts, o.severity, o.note, o.user_id, o.created_at, o.updated_at,
+            'SELECT o.id, o.ts, o.severity, o.note, o.photo_path, o.user_id, o.created_at, o.updated_at,
                     c.display_name AS cat_name, t.display_name AS tag_name
              FROM observation o
              JOIN category c ON c.id = o.category_id
@@ -445,32 +447,33 @@ class UserController
             if ($sev !== null && ($sev < 1 || $sev > 5)) {
                 $error = lang('severity_invalid');
             } else {
-                $photoPath = $obs['photo_path'];
-                $upload    = $_FILES['photo'] ?? null;
+                $photoPath  = $obs['photo_path'];
+                $upload     = $_FILES['photo'] ?? null;
+                $photoError = null;
 
                 if ($upload && $upload['error'] === UPLOAD_ERR_OK) {
                     $photoError = PhotoHandler::validate($upload);
-                    if ($photoError) {
-                        $error = lang($photoError);
-                        goto render_observation;
+                    if (!$photoError) {
+                        if ($photoPath) {
+                            PhotoHandler::delete($this->cfg['photo_root'], $photoPath);
+                        }
+                        $photoPath = PhotoHandler::store($upload, $this->cfg['photo_root'], $obsId);
                     }
-                    if ($photoPath) {
-                        PhotoHandler::delete($this->cfg['photo_root'], $photoPath);
-                    }
-                    $photoPath = PhotoHandler::store($upload, $this->cfg['photo_root'], $obsId);
                 } elseif ($upload && in_array($upload['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE])) {
-                    $error = lang('photo_too_large');
-                    goto render_observation;
+                    $photoError = 'photo_too_large';
                 }
 
-                $this->db->prepare(
-                    'UPDATE observation SET note = ?, severity = ?, photo_path = ?, updated_at = ? WHERE id = ?'
-                )->execute([$note ?: null, $sev, $photoPath, utc_now(), $obsId]);
-                redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
-                return;
+                if ($photoError) {
+                    $error = lang($photoError);
+                } else {
+                    $this->db->prepare(
+                        'UPDATE observation SET note = ?, severity = ?, photo_path = ?, updated_at = ? WHERE id = ?'
+                    )->execute([$note ?: null, $sev, $photoPath, utc_now(), $obsId]);
+                    redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
+                    return;
+                }
             }
         }
-        render_observation:
 
         if (isset($_GET['saved'])) {
             $success = lang('observation_saved');

@@ -64,12 +64,27 @@ $homeUrl = app_url($ghId . '/');
     <?php if (!$photoUrl): ?>
     <div class="row" style="flex-direction:column;align-items:flex-start">
       <label style="margin-bottom:.25rem">Foto</label>
-      <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+      <img id="photo-preview" src="" alt=""
+           style="display:none;max-width:100%;border-radius:var(--radius);margin-bottom:.4rem">
+      <input type="file" name="photo" id="photo-file" accept="image/*"
              style="color:var(--fg)">
       <p class="hint" style="margin-top:.25rem">JPEG, PNG of WebP · max 8 MB</p>
     </div>
+    <script>
+      document.getElementById('photo-file').addEventListener('change', function () {
+        var file = this.files[0];
+        if (!file) return;
+        var preview = document.getElementById('photo-preview');
+        var reader  = new FileReader();
+        reader.onload = function (e) {
+          preview.src   = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+    </script>
     <?php endif; ?>
-    <button type="submit" class="btn" style="margin-top:.25rem"><?= e(lang('save')) ?></button>
+    <button type="submit" class="primary-cta cta-blue" style="margin-top:.5rem"><?= e(lang('save')) ?></button>
   </form>
 </section>
 
@@ -78,7 +93,7 @@ $homeUrl = app_url($ghId . '/');
         action="<?= e(app_url($ghId . '/observation/' . $obs['id'] . '/delete')) ?>"
         onsubmit="return confirm('Waarneming verwijderen?')">
     <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
-    <button type="submit" class="btn btn-danger btn-sm"><?= e(lang('delete')) ?></button>
+    <button type="submit" class="primary-cta cta-red"><?= e(lang('delete')) ?></button>
   </form>
 </section>
 <?php else: ?>

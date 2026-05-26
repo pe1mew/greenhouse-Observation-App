@@ -102,7 +102,13 @@ button.btn-danger:hover  { background: #c0392b; }
   min-height: 56px;       /* well above the 44px touch-target minimum */
   line-height: 1.4;
 }
-.primary-cta:hover { background: #388e3c; }
+.primary-cta:hover        { background: #388e3c; }
+.primary-cta.cta-blue     { background: #1565c0; }
+.primary-cta.cta-blue:hover { background: #0d47a1; }
+.primary-cta.cta-teal     { background: #00897b; }
+.primary-cta.cta-teal:hover { background: #00695c; }
+.primary-cta.cta-red      { background: var(--red); }
+.primary-cta.cta-red:hover  { background: #c0392b; }
 
 /* ── Tap-target list (M3 categories, M4 tags) ────────────────────────── */
 /* Each item is ≥ 44 × 44 CSS px as required by FR-UI-010. */
