@@ -20,7 +20,7 @@ require APP_ROOT . '/views/layout/header.php';
   <section style="padding:.75rem 1rem">
     <div class="row">
       <label><?= e(lang('severity_label')) ?></label>
-      <select name="severity" onchange="cancelTimer()">
+      <select name="severity">
         <option value="">—</option>
         <?php for ($i = 1; $i <= 5; $i++): ?>
           <option value="<?= $i ?>"><?= $i ?></option>
@@ -31,7 +31,7 @@ require APP_ROOT . '/views/layout/header.php';
       <label style="margin-bottom:.25rem"><?= e(lang('note_label')) ?></label>
       <textarea name="note" rows="2"
                 style="width:100%;box-sizing:border-box"
-                oninput="cancelTimer()"></textarea>
+                ></textarea>
     </div>
   </section>
 
@@ -55,14 +55,7 @@ require APP_ROOT . '/views/layout/header.php';
 </form>
 
 <script>
-  var timer = setTimeout(function () {
-    window.location.replace(<?= json_encode($homeUrl) ?>);
-  }, 2000);
-
-  function cancelTimer() { clearTimeout(timer); }
-
   function openCamera() {
-    cancelTimer();
     document.getElementById('photo-input').click();
   }
 
@@ -76,7 +69,6 @@ require APP_ROOT . '/views/layout/header.php';
   }
 
   document.getElementById('photo-input').addEventListener('change', function () {
-    cancelTimer();
     if (!this.files.length) return;
     var reader = new FileReader();
     reader.onload = function (e) {
