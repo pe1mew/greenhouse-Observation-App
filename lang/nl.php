@@ -62,7 +62,7 @@ return [
     'recent_heading'                => 'Recent (laatste 24 uur)',
 
     // ── Full history (FR-REV-020) ────────────────────────────────────
-    'all_observations'              => 'Alle waarnemingen',
+    'all_observations'              => 'Al mijn waarnemingen',
     'history_heading'               => 'Mijn waarnemingen',
     'history_empty'                 => 'Nog geen waarnemingen geregistreerd.',
 
