@@ -22,6 +22,15 @@ require APP_ROOT . '/views/layout/header.php';
 </section>
 
 <section>
+  <h2><?= e(lang('download_my_data')) ?></h2>
+  <p class="hint"><?= e(lang('download_my_data_hint')) ?></p>
+  <form method="post" action="<?= e(app_url($ghId . '/settings/export')) ?>" style="margin-top:.75rem">
+    <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
+    <button type="submit" class="btn"><?= e(lang('download_my_data')) ?></button>
+  </form>
+</section>
+
+<section>
   <h2><?= e(lang('forget_me')) ?></h2>
   <p class="hint"><?= e(lang('forget_me_done')) ?></p>
   <form method="post" action="<?= e(app_url($ghId . '/forget')) ?>" style="margin-top:.75rem">

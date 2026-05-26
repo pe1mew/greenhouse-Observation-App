@@ -34,7 +34,10 @@ require APP_ROOT . '/views/layout/header.php';
   <?php endif; ?>
 </section>
 
-<p style="margin-top:.5rem">
+<p style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
+  <a href="<?= e(app_url($ghId . '/history')) ?>" class="btn btn-sm">
+    <?= e(lang('all_observations')) ?>
+  </a>
   <a href="<?= e(app_url($ghId . '/settings')) ?>" class="btn btn-sm">
     <?= e(lang('settings')) ?>
   </a>

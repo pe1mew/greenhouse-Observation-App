@@ -61,6 +61,11 @@ return [
     'recent_empty'                  => 'Nog geen waarnemingen vandaag — tik op + Snelle waarneming om te beginnen.',
     'recent_heading'                => 'Recent (laatste 24 uur)',
 
+    // ── Full history (FR-REV-020) ────────────────────────────────────
+    'all_observations'              => 'Alle waarnemingen',
+    'history_heading'               => 'Mijn waarnemingen',
+    'history_empty'                 => 'Nog geen waarnemingen geregistreerd.',
+
     // ── Taxonomy management ──────────────────────────────────────────
     'tax_key_required'              => 'Vul een interne sleutel in.',
     'tax_display_name_required'     => 'Vul een weergavenaam in.',
@@ -107,8 +112,10 @@ return [
     'no_observations'                => 'Geen waarnemingen gevonden.',
     'obs_detail'                     => 'Waarneming',
     'obs_admin_deleted'              => 'Waarneming verwijderd.',
+    'obs_admin_updated'              => 'Waarneming bijgewerkt.',
     'note_label'                     => 'Opmerking',
     'severity_label'                 => 'Ernst (1-5)',
+    'timestamp_label'                => 'Tijdstip',
 
     // ── Archive / restore ────────────────────────────────────────────────
     'archive'                        => 'Archiveren',
@@ -132,6 +139,7 @@ return [
     'edit'                          => 'Bewerken',
     'privacy'                       => 'Privacy',
     'download_my_data'              => 'Download mijn gegevens',
+    'download_my_data_hint'         => 'Download al uw waarnemingen en foto\'s als zip-archief (GDPR recht op inzage).',
     'what_kind'                     => 'Wat voor waarneming?',
     'who_is_recording'              => 'Wie neemt waar?',
     'set_once'                      => 'Eenmalig instellen. Wijzigen via Instellingen.',

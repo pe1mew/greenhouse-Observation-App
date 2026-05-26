@@ -74,6 +74,26 @@ class UserController
             return;
         }
 
+        // /<gh-id>/history
+        if ($sub === '/history' || $sub === '/history/') {
+            if (!$user) {
+                redirect($this->basePath . '/' . $ghId . '/register');
+                return;
+            }
+            $this->history($ghId, $gh, $user);
+            return;
+        }
+
+        // /<gh-id>/settings/export  (POST only)
+        if ($sub === '/settings/export' || $sub === '/settings/export/') {
+            if (!$user) {
+                redirect($this->basePath . '/' . $ghId . '/register');
+                return;
+            }
+            $this->exportMyData($method, $ghId, $user);
+            return;
+        }
+
         // /<gh-id>/observation/<obs-id>/photo/delete  (POST only)
         if (preg_match('#^/observation/(\d+)/photo/delete$#', $sub, $m)) {
             if (!$user) {
@@ -317,15 +337,19 @@ class UserController
             return;
         }
 
+        $tz        = new \DateTimeZone($this->cfg['timezone']);
+        $tsDefault = (new \DateTimeImmutable('now', $tz))->format('Y-m-d\TH:i');
+
         http_response_code(200);
         render('user/confirm', [
-            'ghId'   => $ghId,
-            'gh'     => $gh,
-            'ghName' => $gh['name'],
-            'handle' => $user['handle'],
-            'user'   => $user,
-            'obs'    => $obs,
-            'cfg'    => $this->cfg,
+            'ghId'      => $ghId,
+            'gh'        => $gh,
+            'ghName'    => $gh['name'],
+            'handle'    => $user['handle'],
+            'user'      => $user,
+            'obs'       => $obs,
+            'cfg'       => $this->cfg,
+            'tsDefault' => $tsDefault,
         ]);
     }
 
@@ -444,6 +468,23 @@ class UserController
             $sevRaw = trim($_POST['severity'] ?? '');
             $sev    = $sevRaw !== '' ? (int)$sevRaw : null;
 
+            // Optional timestamp adjustment — only from confirm screen (FR-REC-050)
+            $newTs = $obs['ts'];
+            if (($_POST['_from'] ?? '') === 'confirm') {
+                $tsRaw = trim($_POST['ts'] ?? '');
+                if ($tsRaw !== '') {
+                    $tz = new \DateTimeZone($this->cfg['timezone']);
+                    $dt = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $tsRaw, $tz);
+                    if ($dt !== false) {
+                        $candidate = $dt->setTimezone(new \DateTimeZone('UTC'));
+                        $now       = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+                        if ($candidate->getTimestamp() <= $now->getTimestamp()) {
+                            $newTs = $candidate->format('Y-m-d\TH:i:s\Z');
+                        }
+                    }
+                }
+            }
+
             if ($sev !== null && ($sev < 1 || $sev > 5)) {
                 $error = lang('severity_invalid');
             } else {
@@ -467,8 +508,8 @@ class UserController
                     $error = lang($photoError);
                 } else {
                     $this->db->prepare(
-                        'UPDATE observation SET note = ?, severity = ?, photo_path = ?, updated_at = ? WHERE id = ?'
-                    )->execute([$note ?: null, $sev, $photoPath, utc_now(), $obsId]);
+                        'UPDATE observation SET note = ?, severity = ?, photo_path = ?, ts = ?, updated_at = ? WHERE id = ?'
+                    )->execute([$note ?: null, $sev, $photoPath, $newTs, utc_now(), $obsId]);
                     if (($_POST['_from'] ?? '') === 'confirm') {
                         redirect($this->basePath . '/' . $ghId . '/');
                     } else {
@@ -594,6 +635,143 @@ class UserController
         )->execute([utc_now(), $obsId]);
 
         redirect($this->basePath . '/' . $ghId . '/observation/' . $obsId . '?saved=1');
+    }
+
+    // ── Full personal history (FR-REV-020) ───────────────────────────────
+
+    private function history(string $ghId, array $gh, array $user): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT o.id, o.ts, o.severity, o.photo_path,
+                    c.display_name AS cat_name, t.display_name AS tag_name
+             FROM observation o
+             JOIN category c ON c.id = o.category_id
+             JOIN tag t ON t.id = o.tag_id
+             WHERE o.greenhouse_id = ? AND o.user_id = ?
+             ORDER BY o.ts DESC'
+        );
+        $stmt->execute([$ghId, $user['id']]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $tz      = new \DateTimeZone($this->cfg['timezone']);
+        $grouped = [];
+        foreach ($rows as $row) {
+            $date = (new \DateTimeImmutable((string)$row['ts'], new \DateTimeZone('UTC')))
+                        ->setTimezone($tz)->format('Y-m-d');
+            $grouped[$date][] = $row;
+        }
+
+        http_response_code(200);
+        render('user/history', [
+            'ghId'    => $ghId,
+            'gh'      => $gh,
+            'ghName'  => $gh['name'],
+            'handle'  => $user['handle'],
+            'user'    => $user,
+            'grouped' => $grouped,
+            'cfg'     => $this->cfg,
+        ]);
+    }
+
+    // ── GDPR self-export (FR-SEC-050) ────────────────────────────────────
+
+    private function exportMyData(string $method, string $ghId, array $user): void
+    {
+        if ($method !== 'POST') {
+            redirect($this->basePath . '/' . $ghId . '/settings');
+            return;
+        }
+        if (!hash_equals($user['csrf_token'], $_POST['_csrf'] ?? '')) {
+            http_response_code(403);
+            render('error', [
+                'statusCode' => 403,
+                'heading'    => lang('error_403_title'),
+                'body'       => lang('csrf_invalid'),
+            ]);
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT o.greenhouse_id, o.id, o.ts,
+                    u.id AS user_id, u.handle,
+                    c.internal_key AS cat_key, c.display_name AS cat_display,
+                    t.internal_key AS tag_key, t.display_name AS tag_display,
+                    o.severity, o.note, o.photo_path
+             FROM observation o
+             JOIN user u ON u.id = o.user_id
+             JOIN category c ON c.id = o.category_id
+             JOIN tag t ON t.id = o.tag_id
+             WHERE o.user_id = ?
+             ORDER BY o.ts'
+        );
+        $stmt->execute([$user['id']]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $tmpZip = tempnam(sys_get_temp_dir(), 'kwexp_');
+        $zip    = new \ZipArchive();
+        $zip->open($tmpZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        // CSV — RFC 4180, comma-delimited, UTF-8 no BOM
+        $csv  = $this->csvLine(['greenhouse_id', 'observation_id', 'ts_iso8601',
+                                 'user_id', 'user_handle',
+                                 'category_key', 'category_display',
+                                 'tag_key', 'tag_display',
+                                 'severity', 'note', 'photo_filename']);
+        $tz   = new \DateTimeZone($this->cfg['timezone']);
+        foreach ($rows as $row) {
+            $ts  = (new \DateTimeImmutable((string)$row['ts'], new \DateTimeZone('UTC')))
+                       ->setTimezone($tz)->format('Y-m-d\TH:i:sP');
+            $csv .= $this->csvLine([
+                $row['greenhouse_id'], $row['id'], $ts,
+                $row['user_id'], $row['handle'],
+                $row['cat_key'], $row['cat_display'],
+                $row['tag_key'], $row['tag_display'],
+                $row['severity'] ?? '', $row['note'] ?? '',
+                $row['photo_path'] ? basename((string)$row['photo_path']) : '',
+            ]);
+        }
+        $zip->addFromString('observations.csv', $csv);
+
+        // Account metadata
+        $account = 'Handle: ' . $user['handle'] . "\n"
+                 . 'Aangemaakt: ' . $user['created_at'] . "\n"
+                 . 'Laatste bezoek: ' . $user['last_seen_at'] . "\n"
+                 . 'Kas: ' . ($user['current_greenhouse_id'] ?? '—') . "\n";
+        $zip->addFromString('account.txt', $account);
+
+        // Photos
+        foreach ($rows as $row) {
+            if (!empty($row['photo_path'])) {
+                $src = rtrim($this->cfg['photo_root'], '/') . '/' . $row['photo_path'];
+                if (is_file($src)) {
+                    $zip->addFile($src, 'photos/' . basename((string)$row['photo_path']));
+                }
+            }
+        }
+
+        $zip->close();
+
+        $filename = 'mijn-gegevens-' . date('Ymd') . '.zip';
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . filesize($tmpZip));
+        header('Cache-Control: no-store');
+        readfile($tmpZip);
+        unlink($tmpZip);
+        exit;
+    }
+
+    private function csvLine(array $fields, string $sep = ','): string
+    {
+        $parts = [];
+        foreach ($fields as $f) {
+            $f = (string)$f;
+            if (strpbrk($f, $sep . '"\n\r') !== false) {
+                $f = '"' . str_replace('"', '""', $f) . '"';
+            }
+            $parts[] = $f;
+        }
+        return implode($sep, $parts) . "\r\n";
     }
 
     private function isEditable(string $ts, int $windowHours): bool

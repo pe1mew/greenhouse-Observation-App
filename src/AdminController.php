@@ -132,8 +132,16 @@ class AdminController
             $this->handleObservationDelete($method, (int)$m[1], $csrf);
             return;
         }
+        if (preg_match('#^/observations/(\d+)/photo/delete$#', $sub, $m)) {
+            $this->handleObservationPhotoDelete($method, (int)$m[1], $csrf);
+            return;
+        }
         if (preg_match('#^/observations/(\d+)/photo$#', $sub, $m)) {
             $this->handleObservationPhoto((int)$m[1]);
+            return;
+        }
+        if (preg_match('#^/observations/(\d+)/edit$#', $sub, $m)) {
+            $this->handleObservationEdit($method, (int)$m[1], $csrf);
             return;
         }
         if (preg_match('#^/observations/(\d+)/?$#', $sub, $m)) {
@@ -743,6 +751,7 @@ class AdminController
             'csrfToken' => $csrf,
             'obs'       => $obs,
             'cfg'       => $this->cfg,
+            'updated'   => isset($_GET['updated']),
         ]);
     }
 
@@ -758,6 +767,153 @@ class AdminController
         }
 
         PhotoHandler::serve($this->cfg['photo_root'], (string)$row['photo_path']);
+    }
+
+    private function handleObservationEdit(string $method, int $obsId, string $csrf): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT o.*, c.display_name AS cat_name, t.display_name AS tag_name,
+                    g.name AS gh_name
+             FROM observation o
+             JOIN category c ON c.id = o.category_id
+             JOIN tag t ON t.id = o.tag_id
+             JOIN greenhouse g ON g.id = o.greenhouse_id
+             WHERE o.id = ?'
+        );
+        $stmt->execute([$obsId]);
+        $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$obs) {
+            redirect($this->adminUrl . '/observations');
+            return;
+        }
+
+        $categories = $this->db->query(
+            'SELECT id, display_name FROM category ORDER BY sort_order, id'
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $tags = $this->db->query(
+            'SELECT id, category_id, display_name FROM tag ORDER BY category_id, sort_order, id'
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $error   = null;
+        $success = null;
+
+        if ($method === 'POST') {
+            if (!AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+                http_response_code(403);
+                render('error', ['statusCode' => 403, 'heading' => lang('error_403_title'), 'body' => lang('csrf_invalid')]);
+                return;
+            }
+
+            $catId  = (int)($_POST['category_id'] ?? 0);
+            $tagId  = (int)($_POST['tag_id']      ?? 0);
+            $sevRaw = trim($_POST['severity'] ?? '');
+            $sev    = $sevRaw !== '' ? (int)$sevRaw : null;
+            $note   = trim($_POST['note']   ?? '');
+            $tsRaw  = trim($_POST['ts']     ?? '');
+
+            // Validate category + tag relationship
+            $tagRow = null;
+            foreach ($tags as $t) {
+                if ((int)$t['id'] === $tagId && (int)$t['category_id'] === $catId) {
+                    $tagRow = $t;
+                    break;
+                }
+            }
+
+            if (!$tagRow) {
+                $error = 'Ongeldige combinatie van categorie en tag.';
+            } elseif ($sev !== null && ($sev < 1 || $sev > 5)) {
+                $error = lang('severity_invalid');
+            } else {
+                // Parse timestamp
+                $newTs = $obs['ts'];
+                if ($tsRaw !== '') {
+                    $tz = new \DateTimeZone($this->cfg['timezone']);
+                    $dt = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $tsRaw, $tz);
+                    if ($dt !== false) {
+                        $newTs = $dt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+                    }
+                }
+
+                // Handle photo
+                $photoPath = $obs['photo_path'];
+                $upload    = $_FILES['photo'] ?? null;
+                if ($upload && $upload['error'] === UPLOAD_ERR_OK) {
+                    $photoError = PhotoHandler::validate($upload);
+                    if ($photoError) {
+                        $error = lang($photoError);
+                    } else {
+                        if ($photoPath) {
+                            PhotoHandler::delete($this->cfg['photo_root'], $photoPath);
+                        }
+                        $photoPath = PhotoHandler::store($upload, $this->cfg['photo_root'], $obsId);
+                    }
+                }
+
+                if (!$error) {
+                    $this->db->prepare(
+                        'UPDATE observation
+                         SET ts = ?, category_id = ?, tag_id = ?, severity = ?,
+                             note = ?, photo_path = ?, updated_at = ?
+                         WHERE id = ?'
+                    )->execute([$newTs, $catId, $tagId, $sev, $note ?: null, $photoPath, utc_now(), $obsId]);
+
+                    $this->db->prepare(
+                        'INSERT INTO admin_audit (ts, action, target_kind, target_id, details) VALUES (?, ?, ?, ?, ?)'
+                    )->execute([utc_now(), 'edit', 'observation', (string)$obsId, null]);
+
+                    redirect($this->adminUrl . '/observations/' . $obsId . '?updated=1');
+                    return;
+                }
+            }
+
+            // Re-fetch obs for re-render after error
+            $stmt->execute([$obsId]);
+            $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+        }
+
+        // Build ts default for datetime-local input
+        $tz        = new \DateTimeZone($this->cfg['timezone']);
+        $tsLocal   = (new \DateTimeImmutable((string)$obs['ts'], new \DateTimeZone('UTC')))
+                         ->setTimezone($tz)->format('Y-m-d\TH:i');
+        $photoUrl  = !empty($obs['photo_path'])
+                       ? $this->adminUrl . '/observations/' . $obsId . '/photo'
+                       : null;
+
+        $this->adminRender('observation_edit', [
+            'pageTitle'  => lang('obs_detail') . ' #' . $obsId . ' — ' . lang('edit'),
+            'csrfToken'  => $csrf,
+            'obs'        => $obs,
+            'categories' => $categories,
+            'tags'       => $tags,
+            'tsLocal'    => $tsLocal,
+            'photoUrl'   => $photoUrl,
+            'error'      => $error,
+            'success'    => $success,
+        ]);
+    }
+
+    private function handleObservationPhotoDelete(string $method, int $obsId, string $csrf): void
+    {
+        if ($method !== 'POST' || !AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+            redirect($this->adminUrl . '/observations/' . $obsId . '/edit');
+            return;
+        }
+
+        $stmt = $this->db->prepare('SELECT photo_path FROM observation WHERE id = ?');
+        $stmt->execute([$obsId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($row && !empty($row['photo_path'])) {
+            PhotoHandler::delete($this->cfg['photo_root'], (string)$row['photo_path']);
+            $this->db->prepare(
+                'UPDATE observation SET photo_path = NULL, updated_at = ? WHERE id = ?'
+            )->execute([utc_now(), $obsId]);
+        }
+
+        redirect($this->adminUrl . '/observations/' . $obsId . '/edit');
     }
 
     private function handleObservationDelete(string $method, int $obsId, string $csrf): void

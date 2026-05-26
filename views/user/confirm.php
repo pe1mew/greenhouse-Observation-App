@@ -19,6 +19,11 @@ require APP_ROOT . '/views/layout/header.php';
 
   <section style="padding:.75rem 1rem">
     <div class="row">
+      <label><?= e(lang('timestamp_label')) ?></label>
+      <input type="datetime-local" name="ts" value="<?= e($tsDefault) ?>"
+             max="<?= e($tsDefault) ?>" style="flex:1">
+    </div>
+    <div class="row">
       <label><?= e(lang('severity_label')) ?></label>
       <select name="severity">
         <option value="">—</option>

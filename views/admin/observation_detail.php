@@ -1,4 +1,7 @@
 <?php require APP_ROOT . '/views/admin/layout/header.php'; ?>
+<?php if (!empty($updated)): ?>
+  <p class="success-msg"><?= e(lang('obs_admin_updated')) ?></p>
+<?php endif; ?>
 <section>
   <h2><?= e(lang('obs_detail')) ?> #<?= (int)$obs['id'] ?></h2>
   <table style="width:auto;margin-bottom:1rem">
@@ -37,7 +40,9 @@
   </form>
 </section>
 
-<p style="margin-top:1rem">
+<p style="margin-top:1rem;display:flex;gap:.5rem">
+  <a href="<?= e($adminBase) ?>/observations/<?= (int)$obs['id'] ?>/edit"
+     class="btn btn-sm"><?= e(lang('edit')) ?></a>
   <a href="<?= e($adminBase) ?>/observations" class="btn btn-sm"><?= e(lang('back')) ?></a>
 </p>
 <?php require APP_ROOT . '/views/admin/layout/footer.php'; ?>

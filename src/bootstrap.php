@@ -56,9 +56,20 @@ Database::seedTaxonomy($db);
 
 // ── Data retention ───────────────────────────────────────────────────────
 if ((int)$cfg['retention_days'] > 0 && random_int(0, 49) === 0) {
+    // Delete observations older than retention window (FR-SEC-060)
     $db->prepare(
         "DELETE FROM observation WHERE ts < datetime('now', ? || ' days')"
     )->execute(['-' . (int)$cfg['retention_days']]);
+
+    // Prune audit log older than fixed 90-day window (FR-SEC-060)
+    $db->exec("DELETE FROM admin_audit WHERE ts < datetime('now', '-90 days')");
+
+    // Delete orphan users: cookie invalidated AND zero observations left (FR-USR-060)
+    $db->exec(
+        "DELETE FROM user
+         WHERE cookie_invalidated_at IS NOT NULL
+           AND id NOT IN (SELECT DISTINCT user_id FROM observation)"
+    );
 }
 
 // ── Dispatch ─────────────────────────────────────────────────────────────
