@@ -1,0 +1,233 @@
+/* ── Variables (matches webguiExample design system) ─────────────────── */
+:root {
+  --bg:     #1a1a2e;
+  --card:   #16213e;
+  --accent: #0f3460;
+  --fg:     #e0e0e0;
+  --muted:  #999;
+  --green:  #4caf50;
+  --red:    #f44336;
+  --yellow: #ff9800;
+  --radius: 8px;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base body ───────────────────────────────────────────────────────── */
+body {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--fg);
+  padding: 1rem;
+  margin: 0 auto;
+}
+
+/* Desktop admin GUI — wider layout */
+body.admin-gui { max-width: 900px; }
+
+/* Mobile user GUI — phone width, no side padding on small screens */
+body.user-gui  { max-width: 480px; padding: .75rem; }
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+header h1 { font-size: 1.1rem; flex: 1; }
+
+/* ── Sections / cards ────────────────────────────────────────────────── */
+section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+h2 {
+  font-size: 1rem;
+  margin-bottom: .75rem;
+  padding-bottom: .25rem;
+  border-bottom: 1px solid #2a2a4a;
+}
+h3 { font-size: .9rem; color: var(--muted); margin-bottom: .4rem; }
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: .75rem;
+  font-weight: 700;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge.online  { background: var(--green); color: #fff; }
+.badge.offline { background: var(--red);   color: #fff; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+button, .btn {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--fg);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: .85rem;
+  text-decoration: none;
+  text-align: center;
+}
+button:hover, .btn:hover { background: #1a5276; }
+button.btn-sm, .btn-sm   { padding: 3px 10px; font-size: .8rem; }
+button.btn-danger        { background: var(--red); }
+button.btn-danger:hover  { background: #c0392b; }
+
+/* Primary call-to-action (FR-UI-030) — used for "+ Snelle waarneming" */
+.primary-cta {
+  display: block;
+  width: 100%;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  min-height: 56px;       /* well above the 44px touch-target minimum */
+  line-height: 1.4;
+}
+.primary-cta:hover { background: #388e3c; }
+
+/* ── Tap-target list (M3 categories, M4 tags) ────────────────────────── */
+/* Each item is ≥ 44 × 44 CSS px as required by FR-UI-010. */
+.tap-list {
+  list-style: none;
+  border: 1px solid #2a2a4a;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.tap-list li + li { border-top: 1px solid #2a2a4a; }
+.tap-list a, .tap-list button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: .75rem 1rem;
+  background: var(--card);
+  color: var(--fg);
+  border: none;
+  border-radius: 0;
+  font-size: .95rem;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+}
+.tap-list a:hover,
+.tap-list button:hover { background: var(--accent); }
+
+/* ── Form rows ───────────────────────────────────────────────────────── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  flex-wrap: wrap;
+}
+.row > label:first-child { min-width: 140px; color: var(--muted); }
+
+/* ── Inputs ──────────────────────────────────────────────────────────── */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="datetime-local"],
+textarea {
+  background: #0d1b2a;
+  color: var(--fg);
+  border: 1px solid #334;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: .9rem;
+  width: 100%;
+}
+input.short { width: 86px; }
+input.wide,
+textarea    { flex: 1; min-width: 200px; }
+textarea    { min-height: 80px; resize: vertical; }
+
+/* Mobile: larger tap-friendly inputs in user GUI */
+body.user-gui input[type="text"],
+body.user-gui input[type="password"] {
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+/* ── Error and notice messages ───────────────────────────────────────── */
+.error-msg {
+  color: var(--red);
+  font-size: .9rem;
+  margin-bottom: .5rem;
+  padding: .4rem .6rem;
+  background: rgba(244,67,54,.1);
+  border-radius: 4px;
+}
+.success-msg {
+  color: var(--green);
+  font-size: .9rem;
+  margin-bottom: .5rem;
+  padding: .4rem .6rem;
+  background: rgba(76,175,80,.1);
+  border-radius: 4px;
+}
+
+/* ── Misc ────────────────────────────────────────────────────────────── */
+hr   { border: none; border-top: 1px solid #2a2a4a; margin: .75rem 0; }
+.hint { font-size: .8rem; color: var(--muted); margin-top: .4rem; }
+code { background: #0d1b2a; padding: 1px 4px; border-radius: 3px; }
+a    { color: #7abeee; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Tables (admin GUI) ──────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+  margin-top: .5rem;
+}
+.data-table th,
+.data-table td {
+  border: 1px solid #2a2a4a;
+  padding: 5px 10px;
+  text-align: left;
+}
+.data-table th {
+  background: var(--accent);
+  font-weight: 600;
+}
+.data-table tr:nth-child(even) { background: rgba(255,255,255,.03); }
+.data-table tr:hover           { background: rgba(255,255,255,.07); }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding: .5rem 0;
+  border-top: 1px solid var(--accent);
+  font-size: .75rem;
+  color: var(--muted);
+}
+footer a { color: var(--muted); }
+footer a:hover { color: var(--fg); text-decoration: none; }
+
+/* ── Responsive: very narrow phones ─────────────────────────────────── */
+@media (max-width: 360px) {
+  body.user-gui { padding: .5rem; }
+  .primary-cta  { font-size: 1rem; }
+}
