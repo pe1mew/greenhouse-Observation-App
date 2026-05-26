@@ -4,7 +4,7 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^7.4",
+        "php": ">=7.4",
         "ext-pdo_sqlite": "*",
         "ext-mbstring": "*",
         "endroid/qr-code": "^4.0"
