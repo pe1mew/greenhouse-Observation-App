@@ -16,6 +16,25 @@ require APP_ROOT . '/views/layout/header.php';
 <form method="post" action="<?= e($updateUrl) ?>" enctype="multipart/form-data" id="photo-form">
   <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
   <input type="hidden" name="_from" value="confirm">
+
+  <section style="padding:.75rem 1rem">
+    <div class="row">
+      <label><?= e(lang('severity_label')) ?></label>
+      <select name="severity" onchange="cancelTimer()">
+        <option value="">—</option>
+        <?php for ($i = 1; $i <= 5; $i++): ?>
+          <option value="<?= $i ?>"><?= $i ?></option>
+        <?php endfor; ?>
+      </select>
+    </div>
+    <div class="row" style="align-items:flex-start;flex-direction:column">
+      <label style="margin-bottom:.25rem"><?= e(lang('note_label')) ?></label>
+      <textarea name="note" rows="2"
+                style="width:100%;box-sizing:border-box"
+                oninput="cancelTimer()"></textarea>
+    </div>
+  </section>
+
   <input type="file" name="photo" id="photo-input"
          accept="image/*" capture="environment" style="display:none">
 
@@ -26,22 +45,24 @@ require APP_ROOT . '/views/layout/header.php';
     <button type="submit" class="primary-cta cta-teal">Foto opslaan</button>
     <button type="button" class="primary-cta cta-blue" style="margin-top:.5rem" onclick="retake()">Opnieuw</button>
   </div>
-</form>
 
-<div id="btn-initial">
-  <button type="button" class="primary-cta cta-blue" onclick="openCamera()">
-    📷 <?= e(lang('add_photo')) ?>
-  </button>
-  <a href="<?= e($homeUrl) ?>" class="primary-cta" style="margin-top:.5rem"><?= e(lang('done')) ?></a>
-</div>
+  <div id="btn-initial">
+    <button type="button" class="primary-cta cta-blue" onclick="openCamera()">
+      📷 <?= e(lang('add_photo')) ?>
+    </button>
+    <button type="submit" class="primary-cta" style="margin-top:.5rem"><?= e(lang('done')) ?></button>
+  </div>
+</form>
 
 <script>
   var timer = setTimeout(function () {
     window.location.replace(<?= json_encode($homeUrl) ?>);
   }, 2000);
 
+  function cancelTimer() { clearTimeout(timer); }
+
   function openCamera() {
-    clearTimeout(timer);
+    cancelTimer();
     document.getElementById('photo-input').click();
   }
 
@@ -55,6 +76,7 @@ require APP_ROOT . '/views/layout/header.php';
   }
 
   document.getElementById('photo-input').addEventListener('change', function () {
+    cancelTimer();
     if (!this.files.length) return;
     var reader = new FileReader();
     reader.onload = function (e) {
