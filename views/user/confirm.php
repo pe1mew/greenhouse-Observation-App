@@ -38,12 +38,11 @@ require APP_ROOT . '/views/layout/header.php';
   <input type="file" name="photo" id="photo-input"
          accept="image/*" capture="environment" style="display:none">
 
-  <img id="photo-preview" src="" alt="preview"
-       style="display:none;max-width:100%;border-radius:var(--radius);margin-bottom:.75rem">
-
   <div id="btn-after" style="display:none">
-    <button type="submit" class="primary-cta cta-teal"><?= e(lang('save')) ?></button>
-    <button type="button" class="primary-cta cta-blue" style="margin-top:.5rem" onclick="retake()">Opnieuw</button>
+    <img id="photo-preview" src="" alt="preview"
+         style="max-width:100%;border-radius:var(--radius);margin-bottom:.5rem;display:block">
+    <button type="button" class="primary-cta cta-blue" onclick="retake()">📷 Foto opnieuw maken</button>
+    <button type="submit" class="primary-cta cta-teal" style="margin-top:.5rem"><?= e(lang('save')) ?></button>
   </div>
 
   <div id="btn-initial">
@@ -62,9 +61,8 @@ require APP_ROOT . '/views/layout/header.php';
   function retake() {
     var input = document.getElementById('photo-input');
     input.value = '';
-    document.getElementById('photo-preview').style.display = 'none';
-    document.getElementById('btn-after').style.display     = 'none';
-    document.getElementById('btn-initial').style.display   = 'block';
+    document.getElementById('btn-after').style.display  = 'none';
+    document.getElementById('btn-initial').style.display = 'block';
     input.click();
   }
 
@@ -72,9 +70,7 @@ require APP_ROOT . '/views/layout/header.php';
     if (!this.files.length) return;
     var reader = new FileReader();
     reader.onload = function (e) {
-      var preview = document.getElementById('photo-preview');
-      preview.src           = e.target.result;
-      preview.style.display = 'block';
+      document.getElementById('photo-preview').src = e.target.result;
       document.getElementById('btn-initial').style.display = 'none';
       document.getElementById('btn-after').style.display   = 'block';
     };
