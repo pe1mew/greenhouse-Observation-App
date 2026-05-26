@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace GreenhouseObs;
 
+use GreenhouseObs\AdminController;
 use GreenhouseObs\UserController;
 use GreenhouseObs\UserSession;
 
@@ -127,11 +128,8 @@ class Router
 
     private function dispatchAdmin(string $method, string $path, string $adminBase): void
     {
-        // TODO: implement admin handlers in next step
-        http_response_code(200);
-        render('placeholder', [
-            'message' => 'Beheerdersinterface — in uitvoering.',
-        ]);
+        (new AdminController($this->cfg, $this->db, $this->basePath))
+            ->dispatch($method, $path, $adminBase);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

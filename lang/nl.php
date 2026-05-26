@@ -99,6 +99,10 @@ return [
     'error_500_title'               => 'Serverfout',
     'error_500_body'                => 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.',
 
+    // ── Archive / restore ────────────────────────────────────────────────
+    'archive'                        => 'Archiveren',
+    'restore'                        => 'Herstellen',
+
     // ── Common UI labels ─────────────────────────────────────────────
     'back'                          => '← Terug',
     'save'                          => 'Opslaan',
