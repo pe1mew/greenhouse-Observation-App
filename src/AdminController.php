@@ -124,6 +124,12 @@ class AdminController
             return;
         }
 
+        // ── Password change ──────────────────────────────────────────────
+        if ($sub === '/password' || $sub === '/password/') {
+            $this->handlePassword($method, $csrf);
+            return;
+        }
+
         // ── Export ───────────────────────────────────────────────────────
         if ($sub === '/export' || $sub === '/export/') {
             $this->handleExport($csrf);
@@ -585,6 +591,46 @@ class AdminController
             ]);
         }
         redirect($this->adminUrl . '/users');
+    }
+
+    // ── Password change ───────────────────────────────────────────────────
+
+    private function handlePassword(string $method, string $csrf): void
+    {
+        $error   = null;
+        $success = null;
+
+        if ($method === 'POST') {
+            if (!AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+                http_response_code(403);
+                render('error', ['statusCode' => 403, 'heading' => lang('error_403_title'), 'body' => lang('csrf_invalid')]);
+                return;
+            }
+            $current = $_POST['current_password'] ?? '';
+            $new1    = $_POST['new_password']     ?? '';
+            $new2    = $_POST['new_password2']    ?? '';
+
+            $row = $this->db->query('SELECT password_hash FROM admin WHERE id = 1')->fetch();
+            if (!$row || !password_verify($current, (string)$row['password_hash'])) {
+                $error = lang('admin_invalid_credentials');
+            } elseif ($new1 === '') {
+                $error = lang('setup_password_required');
+            } elseif ($new1 !== $new2) {
+                $error = lang('setup_password_mismatch');
+            } else {
+                $this->db->prepare(
+                    'UPDATE admin SET password_hash = ?, password_updated_at = ? WHERE id = 1'
+                )->execute([password_hash($new1, PASSWORD_DEFAULT), utc_now()]);
+                $success = 'Wachtwoord gewijzigd.';
+            }
+        }
+
+        $this->adminRender('password', [
+            'pageTitle' => 'Wachtwoord wijzigen',
+            'csrfToken' => $csrf,
+            'error'     => $error,
+            'success'   => $success,
+        ]);
     }
 
     // ── Export ────────────────────────────────────────────────────────────

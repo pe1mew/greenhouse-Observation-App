@@ -23,5 +23,6 @@
   <a href="<?= e($adminBase) ?>/taxonomy"    class="btn btn-sm">Taxonomie</a>
   <a href="<?= e($adminBase) ?>/users"       class="btn btn-sm">Gebruikers</a>
   <a href="<?= e($adminBase) ?>/export"      class="btn btn-sm">Export</a>
+  <a href="<?= e($adminBase) ?>/password"   class="btn btn-sm">Wachtwoord</a>
 </nav>
 <?php endif; ?>

@@ -44,6 +44,12 @@ class Router
             return;
         }
 
+        // ── Privacy notice (FR-SEC-040) ───────────────────────────────
+        if ($path === '/privacy') {
+            $this->handlePrivacy();
+            return;
+        }
+
         // ── Root (no greenhouse selected) ─────────────────────────────
         if ($path === '/' || $path === '') {
             $this->handleRoot();
@@ -122,6 +128,19 @@ class Router
 
         http_response_code(200);
         render('user/root', ['greenhouses' => $greenhouses]);
+    }
+
+    // ── Privacy notice ────────────────────────────────────────────────────
+
+    private function handlePrivacy(): void
+    {
+        http_response_code(200);
+        render('user/privacy', [
+            'pageTitle'    => lang('privacy'),
+            'showPrivacy'  => false,
+            'adminContact' => $this->cfg['admin_contact'] ?? '',
+            'retention'    => (int)$this->cfg['retention_days'],
+        ]);
     }
 
     // ── Admin dispatcher ──────────────────────────────────────────────────
