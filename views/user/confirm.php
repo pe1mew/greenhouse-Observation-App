@@ -23,14 +23,14 @@ require APP_ROOT . '/views/layout/header.php';
       <input type="datetime-local" name="ts" value="<?= e($tsDefault) ?>"
              max="<?= e($tsDefault) ?>" style="flex:1">
     </div>
-    <div class="row">
+    <div class="row" style="align-items:center">
       <label><?= e(lang('severity_label')) ?></label>
-      <select name="severity">
-        <option value="">—</option>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+        <label class="sev-btn"><input type="radio" name="severity" value="" checked><span>—</span></label>
         <?php for ($i = 1; $i <= 5; $i++): ?>
-          <option value="<?= $i ?>"><?= $i ?></option>
+          <label class="sev-btn"><input type="radio" name="severity" value="<?= $i ?>"><span><?= $i ?></span></label>
         <?php endfor; ?>
-      </select>
+      </div>
     </div>
     <div class="row" style="align-items:flex-start;flex-direction:column">
       <label style="margin-bottom:.25rem"><?= e(lang('note_label')) ?></label>

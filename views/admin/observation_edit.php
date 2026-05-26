@@ -54,14 +54,12 @@
       <tr>
         <th style="text-align:right;padding-right:1rem"><?= e(lang('severity_label')) ?></th>
         <td>
-          <select name="severity">
-            <option value="">—</option>
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+            <label class="sev-btn"><input type="radio" name="severity" value="" <?= $obs['severity'] === null ? 'checked' : '' ?>><span>—</span></label>
             <?php for ($i = 1; $i <= 5; $i++): ?>
-              <option value="<?= $i ?>" <?= ((int)($obs['severity'] ?? 0) === $i) ? 'selected' : '' ?>>
-                <?= $i ?>
-              </option>
+              <label class="sev-btn"><input type="radio" name="severity" value="<?= $i ?>" <?= (int)($obs['severity'] ?? 0) === $i ? 'checked' : '' ?>><span><?= $i ?></span></label>
             <?php endfor; ?>
-          </select>
+          </div>
         </td>
       </tr>
       <tr>

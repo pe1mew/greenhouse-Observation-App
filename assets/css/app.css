@@ -233,6 +233,27 @@ footer {
 footer a { color: var(--muted); }
 footer a:hover { color: var(--fg); text-decoration: none; }
 
+/* ── Severity picker: tap-friendly 1–5 button row ───────────────────── */
+.sev-btn { cursor: pointer; }
+.sev-btn input[type="radio"] { display: none; }
+.sev-btn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--fg);
+  font-size: 1.2rem;
+  font-weight: 600;
+  user-select: none;
+}
+.sev-btn input[type="radio"]:checked + span {
+  background: var(--green);
+  color: #fff;
+}
+
 /* ── Responsive: very narrow phones ─────────────────────────────────── */
 @media (max-width: 360px) {
   body.user-gui { padding: .5rem; }

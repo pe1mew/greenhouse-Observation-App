@@ -48,14 +48,14 @@ $homeUrl = app_url($ghId . '/');
         action="<?= e(app_url($ghId . '/observation/' . $obs['id'])) ?>"
         enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="<?= e($user['csrf_token']) ?>">
-    <div class="row">
+    <div class="row" style="align-items:center">
       <label><?= e(lang('severity_label')) ?></label>
-      <select name="severity">
-        <option value="">—</option>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+        <label class="sev-btn"><input type="radio" name="severity" value="" <?= $obs['severity'] === null ? 'checked' : '' ?>><span>—</span></label>
         <?php for ($i = 1; $i <= 5; $i++): ?>
-          <option value="<?= $i ?>" <?= ((int)($obs['severity'] ?? 0) === $i) ? 'selected' : '' ?>><?= $i ?></option>
+          <label class="sev-btn"><input type="radio" name="severity" value="<?= $i ?>" <?= (int)($obs['severity'] ?? 0) === $i ? 'checked' : '' ?>><span><?= $i ?></span></label>
         <?php endfor; ?>
-      </select>
+      </div>
     </div>
     <div class="row">
       <label><?= e(lang('note_label')) ?></label>
