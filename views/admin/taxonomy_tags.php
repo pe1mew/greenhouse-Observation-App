@@ -13,7 +13,8 @@
           <td><?= e($tag['display_name']) ?></td>
           <td><?= (int)$tag['obs_count'] ?></td>
           <td><?= $tag['active_flag'] ? '<span class="badge online">Actief</span>' : '<span class="badge offline">Gearchiveerd</span>' ?></td>
-          <td>
+          <td style="display:flex;gap:.25rem;flex-wrap:wrap">
+            <a href="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/tags/<?= (int)$tag['id'] ?>/edit" class="btn btn-sm"><?= e(lang('edit')) ?></a>
             <form method="post"
                   action="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/tags/<?= (int)$tag['id'] ?>/archive"
                   style="margin:0">

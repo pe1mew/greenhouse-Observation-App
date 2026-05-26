@@ -14,6 +14,7 @@
           <td><?= $cat['active_flag'] ? '<span class="badge online">Actief</span>' : '<span class="badge offline">Gearchiveerd</span>' ?></td>
           <td style="display:flex;gap:.25rem;flex-wrap:wrap">
             <a href="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>" class="btn btn-sm">Tags</a>
+            <a href="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/edit" class="btn btn-sm"><?= e(lang('edit')) ?></a>
             <form method="post" action="<?= e($adminBase) ?>/taxonomy/<?= (int)$cat['id'] ?>/archive" style="margin:0">
               <input type="hidden" name="_csrf" value="<?= e($csrfToken) ?>">
               <button type="submit" class="btn btn-sm">

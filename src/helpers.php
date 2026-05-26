@@ -37,6 +37,13 @@ function tz_display(string $utcTs, string $tz): string
     return $dt->setTimezone(new DateTimeZone($tz))->format('Y-m-d\TH:i:sP');
 }
 
+/** Convert a stored UTC timestamp to local date+time without timezone indication. */
+function tz_local(string $utcTs, string $tz): string
+{
+    $dt = new DateTimeImmutable($utcTs, new DateTimeZone('UTC'));
+    return $dt->setTimezone(new DateTimeZone($tz))->format('Y-m-d H:i');
+}
+
 /** Send an HTTP redirect and stop execution. */
 function redirect(string $url, int $code = 302): void
 {

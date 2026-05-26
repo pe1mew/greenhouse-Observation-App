@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= e($pageTitle ?? 'Greenhouse Observation App') ?></title>
+  <title><?= e($pageTitle ?? lang('app_name')) ?></title>
   <link rel="stylesheet" href="<?= e(app_url('assets/css/app.css')) ?>">
 </head>
 <body class="<?= e($bodyClass ?? 'user-gui') ?>">

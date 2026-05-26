@@ -123,11 +123,18 @@ class Router
             return;
         }
 
-        $stmt = $this->db->query('SELECT id, name FROM greenhouse ORDER BY name');
-        $greenhouses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $count = (int)$this->db->query('SELECT COUNT(*) FROM greenhouse')->fetchColumn();
+        $greenhouses = [];
+        if ($count < 5) {
+            $greenhouses = $this->db->query('SELECT id, name FROM greenhouse ORDER BY name')
+                                    ->fetchAll(\PDO::FETCH_ASSOC);
+        }
 
         http_response_code(200);
-        render('user/root', ['greenhouses' => $greenhouses]);
+        render('user/root', [
+            'greenhouses' => $greenhouses,
+            'showList'    => $count < 5,
+        ]);
     }
 
     // ── Privacy notice ────────────────────────────────────────────────────

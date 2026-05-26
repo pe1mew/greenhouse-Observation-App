@@ -1,10 +1,12 @@
 <?php
-$pageTitle   = 'Greenhouse Observation App';
+$pageTitle   = lang('app_name');
 $showPrivacy = true;
 require APP_ROOT . '/views/layout/header.php';
 ?>
 <section>
-  <?php if (empty($greenhouses)): ?>
+  <?php if (empty($greenhouses) && !$showList): ?>
+    <p><?= e(lang('greenhouse_scan_qr')) ?></p>
+  <?php elseif (empty($greenhouses)): ?>
     <p><?= e(lang('greenhouse_none_configured')) ?></p>
   <?php else: ?>
     <p><?= e(lang('greenhouse_scan_or_choose')) ?></p>

@@ -9,7 +9,7 @@ require APP_ROOT . '/views/layout/header.php';
   <?php if ($error): ?>
     <p class="error-msg"><?= e($error) ?></p>
   <?php endif; ?>
-  <form method="post" action="<?= e(app_url($ghId . '/register')) ?>">
+  <form method="post" action="<?= e(app_url($ghId . '/register')) ?>" style="margin-top:.75rem">
     <div class="row">
       <input type="text" name="handle" value="<?= e($enteredHandle) ?>"
              placeholder="Uw naam" autofocus maxlength="40" autocomplete="nickname">

@@ -101,6 +101,10 @@ class AdminController
             $this->handleCategoryArchive($method, (int)$m[1], $csrf);
             return;
         }
+        if (preg_match('#^/taxonomy/(\d+)/edit$#', $sub, $m)) {
+            $this->handleCategoryEdit($method, (int)$m[1], $csrf);
+            return;
+        }
         if (preg_match('#^/taxonomy/(\d+)/tags/new$#', $sub, $m)) {
             $this->handleTagNew($method, (int)$m[1], $csrf);
             return;
@@ -109,8 +113,26 @@ class AdminController
             $this->handleTagArchive($method, (int)$m[1], (int)$m[2], $csrf);
             return;
         }
+        if (preg_match('#^/taxonomy/(\d+)/tags/(\d+)/edit$#', $sub, $m)) {
+            $this->handleTagEdit($method, (int)$m[1], (int)$m[2], $csrf);
+            return;
+        }
         if (preg_match('#^/taxonomy/(\d+)/?$#', $sub, $m)) {
             $this->handleTaxonomyTags($method, (int)$m[1], $csrf);
+            return;
+        }
+
+        // ── Observations ─────────────────────────────────────────────────
+        if ($sub === '/observations' || $sub === '/observations/') {
+            $this->handleObservations($csrf);
+            return;
+        }
+        if (preg_match('#^/observations/(\d+)/delete$#', $sub, $m)) {
+            $this->handleObservationDelete($method, (int)$m[1], $csrf);
+            return;
+        }
+        if (preg_match('#^/observations/(\d+)/?$#', $sub, $m)) {
+            $this->handleObservationDetail((int)$m[1], $csrf);
             return;
         }
 
@@ -456,6 +478,93 @@ class AdminController
         redirect($this->adminUrl . '/taxonomy');
     }
 
+    private function handleCategoryEdit(string $method, int $catId, string $csrf): void
+    {
+        $row = $this->db->prepare('SELECT * FROM category WHERE id = ?');
+        $row->execute([$catId]);
+        $cat = $row->fetch();
+        if (!$cat) {
+            $this->send404();
+            return;
+        }
+
+        $error  = null;
+        $values = ['internal_key' => $cat['internal_key'], 'display_name' => $cat['display_name']];
+
+        if ($method === 'POST') {
+            if (!AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+                http_response_code(403); render('error', ['statusCode' => 403, 'heading' => lang('error_403_title'), 'body' => lang('csrf_invalid')]); return;
+            }
+            $name = trim($_POST['display_name'] ?? '');
+            if ($name === '') {
+                $error = lang('tax_display_name_required');
+            } else {
+                $this->db->prepare('UPDATE category SET display_name = ? WHERE id = ?')
+                         ->execute([$name, $catId]);
+                redirect($this->adminUrl . '/taxonomy');
+                return;
+            }
+            $values['display_name'] = $name;
+        }
+
+        $this->adminRender('category_form', [
+            'pageTitle' => 'Categorie bewerken',
+            'csrfToken' => $csrf,
+            'error'     => $error,
+            'values'    => $values,
+            'isEdit'    => true,
+            'editAction' => $this->adminUrl . '/taxonomy/' . $catId . '/edit',
+        ]);
+    }
+
+    private function handleTagEdit(string $method, int $catId, int $tagId, string $csrf): void
+    {
+        $catRow = $this->db->prepare('SELECT * FROM category WHERE id = ?');
+        $catRow->execute([$catId]);
+        $cat = $catRow->fetch();
+        if (!$cat) {
+            $this->send404();
+            return;
+        }
+
+        $tagRow = $this->db->prepare('SELECT * FROM tag WHERE id = ? AND category_id = ?');
+        $tagRow->execute([$tagId, $catId]);
+        $tag = $tagRow->fetch();
+        if (!$tag) {
+            $this->send404();
+            return;
+        }
+
+        $error  = null;
+        $values = ['internal_key' => $tag['internal_key'], 'display_name' => $tag['display_name']];
+
+        if ($method === 'POST') {
+            if (!AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+                http_response_code(403); render('error', ['statusCode' => 403, 'heading' => lang('error_403_title'), 'body' => lang('csrf_invalid')]); return;
+            }
+            $name = trim($_POST['display_name'] ?? '');
+            if ($name === '') {
+                $error = lang('tax_display_name_required');
+            } else {
+                $this->db->prepare('UPDATE tag SET display_name = ? WHERE id = ?')
+                         ->execute([$name, $tagId]);
+                redirect($this->adminUrl . '/taxonomy/' . $catId);
+                return;
+            }
+            $values['display_name'] = $name;
+        }
+
+        $this->adminRender('tag_form', [
+            'pageTitle'  => $cat['display_name'] . ' — Tag bewerken',
+            'csrfToken'  => $csrf,
+            'error'      => $error,
+            'values'     => $values,
+            'cat'        => $cat,
+            'isEdit'     => true,
+            'editAction' => $this->adminUrl . '/taxonomy/' . $catId . '/tags/' . $tagId . '/edit',
+        ]);
+    }
+
     private function handleTaxonomyTags(string $method, int $catId, string $csrf): void
     {
         $cat = $this->db->prepare('SELECT * FROM category WHERE id = ?');
@@ -548,6 +657,111 @@ class AdminController
                      ->execute([$row['active_flag'] ? 0 : 1, $tagId]);
         }
         redirect($this->adminUrl . '/taxonomy/' . $catId);
+    }
+
+    // ── Observations ─────────────────────────────────────────────────────
+
+    private function handleObservations(string $csrf): void
+    {
+        $ghFilter   = trim($_GET['gh_id'] ?? '');
+        $fromFilter = trim($_GET['from']  ?? '');
+        $toFilter   = trim($_GET['to']    ?? '');
+
+        $sql    = "SELECT o.id, o.ts, o.severity, o.note,
+                          g.id AS gh_id, g.name AS gh_name,
+                          u.handle,
+                          c.display_name AS cat_name, t.display_name AS tag_name
+                   FROM observation o
+                   JOIN greenhouse g ON g.id = o.greenhouse_id
+                   JOIN user u ON u.id = o.user_id
+                   JOIN category c ON c.id = o.category_id
+                   JOIN tag t ON t.id = o.tag_id
+                   WHERE 1=1";
+        $params = [];
+
+        if (preg_match('/^[0-9A-F]{4}$/', $ghFilter)) {
+            $sql .= ' AND o.greenhouse_id = ?';
+            $params[] = $ghFilter;
+        }
+        if ($fromFilter !== '') {
+            $sql .= ' AND o.ts >= ?';
+            $params[] = $fromFilter . 'T00:00:00Z';
+        }
+        if ($toFilter !== '') {
+            $sql .= ' AND o.ts <= ?';
+            $params[] = $toFilter . 'T23:59:59Z';
+        }
+        $sql .= ' ORDER BY o.ts DESC LIMIT 200';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $observations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $greenhouses = $this->db->query('SELECT id, name FROM greenhouse ORDER BY name')->fetchAll();
+
+        $this->adminRender('observations', [
+            'pageTitle'    => lang('observations'),
+            'csrfToken'    => $csrf,
+            'observations' => $observations,
+            'greenhouses'  => $greenhouses,
+            'selGhId'      => $ghFilter,
+            'selFrom'      => $fromFilter,
+            'selTo'        => $toFilter,
+            'cfg'          => $this->cfg,
+        ]);
+    }
+
+    private function handleObservationDetail(int $obsId, string $csrf): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT o.id, o.ts, o.severity, o.note, o.photo_path, o.created_at, o.updated_at,
+                    g.id AS gh_id, g.name AS gh_name,
+                    u.id AS user_id, u.handle,
+                    c.display_name AS cat_name, t.display_name AS tag_name
+             FROM observation o
+             JOIN greenhouse g ON g.id = o.greenhouse_id
+             JOIN user u ON u.id = o.user_id
+             JOIN category c ON c.id = o.category_id
+             JOIN tag t ON t.id = o.tag_id
+             WHERE o.id = ?'
+        );
+        $stmt->execute([$obsId]);
+        $obs = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$obs) {
+            $this->send404();
+            return;
+        }
+
+        $this->adminRender('observation_detail', [
+            'pageTitle' => lang('obs_detail') . ' #' . $obsId,
+            'csrfToken' => $csrf,
+            'obs'       => $obs,
+            'cfg'       => $this->cfg,
+        ]);
+    }
+
+    private function handleObservationDelete(string $method, int $obsId, string $csrf): void
+    {
+        if ($method !== 'POST' || !AdminAuth::verifyCsrf($_POST['_csrf'] ?? '')) {
+            redirect($this->adminUrl . '/observations/' . $obsId);
+            return;
+        }
+
+        $stmt = $this->db->prepare('SELECT id FROM observation WHERE id = ?');
+        $stmt->execute([$obsId]);
+        if (!$stmt->fetch()) {
+            redirect($this->adminUrl . '/observations');
+            return;
+        }
+
+        $this->db->prepare('DELETE FROM observation WHERE id = ?')->execute([$obsId]);
+
+        $this->db->prepare(
+            'INSERT INTO admin_audit (ts, action, target_kind, target_id, details) VALUES (?, ?, ?, ?, ?)'
+        )->execute([utc_now(), 'delete', 'observation', (string)$obsId, null]);
+
+        redirect($this->adminUrl . '/observations?deleted=1');
     }
 
     // ── Users ─────────────────────────────────────────────────────────────

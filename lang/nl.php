@@ -6,6 +6,9 @@
  */
 return [
 
+    // ── Application identity ─────────────────────────────────────────
+    'app_name'                      => 'Kas Waarnemingen',
+
     // ── Handle / registration ────────────────────────────────────────
     'handle_required'               => 'Vul een naam in.',
     'handle_too_long'               => 'Naam mag maximaal 40 tekens zijn.',
@@ -98,6 +101,14 @@ return [
     'error_429_body'                => 'Te veel mislukte inlogpogingen. Probeer opnieuw over :seconds seconden.',
     'error_500_title'               => 'Serverfout',
     'error_500_body'                => 'Er is een onverwachte fout opgetreden. Probeer het later opnieuw.',
+
+    // ── Observations (admin) ─────────────────────────────────────────────
+    'observations'                   => 'Waarnemingen',
+    'no_observations'                => 'Geen waarnemingen gevonden.',
+    'obs_detail'                     => 'Waarneming',
+    'obs_admin_deleted'              => 'Waarneming verwijderd.',
+    'note_label'                     => 'Opmerking',
+    'severity_label'                 => 'Ernst (1-5)',
 
     // ── Archive / restore ────────────────────────────────────────────────
     'archive'                        => 'Archiveren',

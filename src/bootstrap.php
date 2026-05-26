@@ -54,6 +54,13 @@ $db = Database::connect($cfg['db_path']);
 Database::migrate($db, APP_ROOT . '/migrations');
 Database::seedTaxonomy($db);
 
+// ── Data retention ───────────────────────────────────────────────────────
+if ((int)$cfg['retention_days'] > 0 && random_int(0, 49) === 0) {
+    $db->prepare(
+        "DELETE FROM observation WHERE ts < datetime('now', ? || ' days')"
+    )->execute(['-' . (int)$cfg['retention_days']]);
+}
+
 // ── Dispatch ─────────────────────────────────────────────────────────────
 (new Router($cfg, $db))->dispatch(
     $_SERVER['REQUEST_METHOD'] ?? 'GET',

@@ -94,7 +94,7 @@ button.btn-danger:hover  { background: #c0392b; }
   border: none;
   border-radius: var(--radius);
   padding: 1rem;
-  font-size: 1.1rem;
+  font-size: clamp(1.25rem, 8vw, 2.5rem);
   font-weight: 600;
   cursor: pointer;
   text-align: center;
@@ -230,5 +230,5 @@ footer a:hover { color: var(--fg); text-decoration: none; }
 /* ── Responsive: very narrow phones ─────────────────────────────────── */
 @media (max-width: 360px) {
   body.user-gui { padding: .5rem; }
-  .primary-cta  { font-size: 1rem; }
+  .primary-cta  { font-size: clamp(1rem, 7vw, 1.5rem); }
 }
