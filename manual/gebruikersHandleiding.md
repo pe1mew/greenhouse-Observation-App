@@ -2,7 +2,8 @@
 
 > **Versie:** 1.0.0-rc.1  
 > **Datum:** 26 mei 2026  
-> **Doelgroep:** Kasmedewerkers en oogsthelpers
+> **Doelgroep:** Kasmedewerkers en oogsthelpers  
+> **Verwante documenten:** `../design/operatorObservationStrategy.md` (achtergrond), `../design/functionalRequirements.md` (FDS), `adminManual.md` (beheerdershandleiding, Engels — zelfde map)
 
 ---
 
@@ -17,7 +18,10 @@
 7. [Volledige geschiedenis bekijken](#7-volledige-geschiedenis-bekijken)
 8. [Een waarneming bewerken of verwijderen](#8-een-waarneming-bewerken-of-verwijderen)
 9. [Instellingen](#9-instellingen)
-10. [Veelgestelde vragen](#10-veelgestelde-vragen)
+10. [Privacy en uw gegevens](#10-privacy-en-uw-gegevens)
+11. [Contact met de beheerder](#11-contact-met-de-beheerder)
+12. [Tot slot — over verwachting](#12-tot-slot--over-verwachting)
+13. [Veelgestelde vragen](#13-veelgestelde-vragen)
 
 ---
 
@@ -44,17 +48,15 @@ Tijdens de inrijperiode van een nieuwe kasregelaar reageert het systeem nog niet
 
 Zoek de QR-code die in uw kas hangt. Scan de code met de camera van uw telefoon.
 
-> **📷 Screenshot nodig:** Voorbeeld van de QR-poster op de kasmuur (mockup M9) — toon de kasnaam prominent, de QR-code en de URL eronder.
-
 Uw browser opent automatisch de app voor de juiste kas. Heeft u geen QR-code bij de hand? Vraag de beheerder om de directe URL.
 
 ### Stap 2 — Uw naam invoeren
 
 Bij het eerste gebruik vraagt de app om uw naam.
 
-> **📷 Screenshot nodig:** Het registratiescherm — invoerveld "Uw naam" met de knop "Opslaan" eronder.
+![Registratiescherm](images/user_1_registration.png)
 
-![Registratiescherm](screenshots/01_registratie.png)
+*Figuur 1 — Registratiescherm: invoerveld "Uw naam" met de knop "Opslaan".*
 
 - Vul uw voornaam (of bijnaam) in — maximaal 40 tekens.
 - Tik op **Opslaan**.
@@ -71,9 +73,9 @@ Bij het eerste gebruik vraagt de app om uw naam.
 
 Na de registratie (of bij elk volgend bezoek) ziet u het startscherm.
 
-> **📷 Screenshot nodig:** Het startscherm (mockup M2) — toon de kasnaam bovenaan, de grote knop "+ Snelle waarneming", de lijst "Recent (laatste 24 uur)" met 2–3 voorbeeldwaarnemingen, en de knoppen "Al mijn waarnemingen" en "Instellingen" onderaan.
+![Startscherm](images/user_2_startScherm.png)
 
-![Startscherm](screenshots/02_startscherm.png)
+*Figuur 2 — Startscherm: kasnaam bovenaan, knop "+ Snelle waarneming", recente waarnemingen en navigatieknoppen onderaan.*
 
 Het startscherm bevat:
 
@@ -99,9 +101,9 @@ Een waarneming invoeren gaat in **twee tikken**.
 
 Tik op **+ Snelle waarneming**. U ziet een lijst met categorieën.
 
-> **📷 Screenshot nodig:** Het categoriescherm (mockup M3) — toon de volledige lijst met alle actieve categorieën als grote tikbare rijen, met "← Terug" onderaan.
+![Categoriescherm](images/user_3_registratieCategorie.png)
 
-![Categoriescherm](screenshots/03_categorieen.png)
+*Figuur 3 — Categoriescherm: de actieve categorieën als grote tikbare rijen.*
 
 Beschikbare categorieën:
 
@@ -122,9 +124,9 @@ Tik op de categorie die het best past bij wat u wilt melden.
 
 U ziet nu de specifieke opties binnen de gekozen categorie.
 
-> **📷 Screenshot nodig:** Het tagscherm (mockup M4) — toon een categorie (bijv. "Temperatuur") met de bijbehorende tags als grote tikbare knoppen: "Hittestress", "Koudeschade", "Vorstschade", "Groot dag-nachtverschil".
+![Tagscherm](images/user_4_registratieTag.png)
 
-![Tagscherm](screenshots/04_tags.png)
+*Figuur 4 — Tagscherm: de tags binnen de gekozen categorie als grote tikbare knoppen.*
 
 Tik op de tag die de situatie het best beschrijft. De waarneming wordt **direct opgeslagen** — u hoeft niet nog eens op een bevestigingsknop te tikken.
 
@@ -136,9 +138,9 @@ Tik op de tag die de situatie het best beschrijft. De waarneming wordt **direct 
 
 Na het tikken op een tag ziet u het bevestigingsscherm met een groen vinkje.
 
-> **📷 Screenshot nodig:** Het bevestigingsscherm (mockup M5) — toon het grote ✓-symbool, "Opgeslagen", de categorie en tag als subtekst, en daaronder het tijdstipveld, de ernstknoppen (—, 1, 2, 3, 4, 5), het opmerkingenveld, de knop "📷 Foto toevoegen" en onderaan de knop "Klaar".
+![Bevestigingsscherm](images/user_5_registratieBevestiging.png)
 
-![Bevestigingsscherm](screenshots/05_bevestiging.png)
+*Figuur 5 — Bevestigingsscherm: groen vinkje bovenaan, optionele velden voor tijdstip, ernst, opmerking en foto, en de knop "Klaar".*
 
 Uw waarneming is nu al opgeslagen. Op dit scherm kunt u optioneel extra informatie toevoegen.
 
@@ -146,7 +148,9 @@ Uw waarneming is nu al opgeslagen. Op dit scherm kunt u optioneel extra informat
 
 Het tijdstip is standaard ingesteld op **nu**. Als de situatie al langer geleden was — bijvoorbeeld "zo'n half uur geleden" — pas dan het tijdstip aan door op het tijdstipveld te tikken.
 
-> **📷 Screenshot nodig:** Detailshot van het tijdstipveld met een openstaande tijdkiezer op de telefoon.
+![Tijdstipveld](images/tijdstipvelddetail.png)
+
+*Figuur 6 — Tijdstipveld met openstaande tijdkiezer.*
 
 ### Ernst opgeven
 
@@ -163,7 +167,9 @@ Geef aan hoe ernstig de situatie is op een schaal van 1 tot 5.
 
 Tik op het gewenste getal. Tik nogmaals op **—** om de ernst te wissen.
 
-> **📷 Screenshot nodig:** Detailshot van de ernstknoppen met "3" geselecteerd (knop zichtbaar gemarkeerd).
+![Ernst knoppen](images/user_6_registratieBevestigingDetailErnst.png)
+
+*Figuur 7 — Ernstknoppen: tik op een getal van 1 t/m 5, of op "—" om de ernst te wissen.*
 
 ### Opmerking toevoegen
 
@@ -173,9 +179,9 @@ Tik in het opmerkingenveld en typ een korte toelichting. Bijvoorbeeld: *"Linkerh
 
 Tik op **📷 Foto toevoegen** om de camera van uw telefoon te openen. Maak een foto of kies er een uit uw galerij.
 
-> **📷 Screenshot nodig:** Bevestigingsscherm nadat een foto is gemaakt — toon de fotopreview boven de knoppen "📷 Foto opnieuw maken" en "Opslaan".
+![Foto preview](images/user_7_registratieBevestigingPictureMade.png)
 
-![Foto preview](screenshots/05b_foto_preview.png)
+*Figuur 8 — Bevestigingsscherm met fotopreview en de knoppen "📷 Foto opnieuw maken" en "Opslaan".*
 
 - Vind de foto niet goed? Tik op **📷 Foto opnieuw maken**.
 - Tevreden? Tik op **Opslaan** — foto en eventuele andere aanvullingen worden opgeslagen.
@@ -194,7 +200,9 @@ Wilt u geen extra informatie toevoegen? Tik op **Klaar**. U gaat terug naar het 
 
 Op het startscherm ziet u automatisch uw waarnemingen van de **afgelopen 24 uur**, nieuwste bovenaan.
 
-> **📷 Screenshot nodig:** Startscherm met 3–4 recente waarnemingen in de lijst — toon de categorie/tag-tekst en het tijdstip rechts.
+![historie waarnemingen](images/user_2_startSchermMetGeschiedenis.png)
+
+*Figuur 9 — Startscherm met recente waarnemingen, nieuwste bovenaan.*
 
 Iedere regel toont:
 - **Categorie — Tag** (bijv. *Temperatuur — Hittestress*)
@@ -209,9 +217,9 @@ Tik op een regel om de volledige details te bekijken.
 
 Tik op **Al mijn waarnemingen** op het startscherm voor een overzicht van al uw waarnemingen, gegroepeerd per dag.
 
-> **📷 Screenshot nodig:** De geschiedenispagina — toon een daglabel (bijv. "26-05-2026") met daaronder 3 waarnemingen, inclusief een met een 📷-icoontje.
+![historie waarnemingen](images/user_9_geschiedenis.png)
 
-![Geschiedenis](screenshots/06_geschiedenis.png)
+*Figuur 10 — Volledige geschiedenis gegroepeerd per dag; foto's worden aangeduid met een 📷-icoontje.*
 
 - Waarnemingen met een foto hebben een **📷** icoontje.
 - Tik op een waarneming om de details te bekijken.
@@ -223,9 +231,9 @@ Tik op **Al mijn waarnemingen** op het startscherm voor een overzicht van al uw 
 
 Tik op een waarneming (vanuit het startscherm of de geschiedenis) om het detailscherm te openen.
 
-> **📷 Screenshot nodig:** Het detailscherm van een waarneming — toon het tijdstip bovenaan, de categorie/tag vet, de ernst, de opmerking, de foto (indien aanwezig), en het bewerkformulier met ernstknoppen, opmerkingenveld en de knoppen "Opslaan" (blauw) en "Verwijderen" (rood).
+![Detailscherm](images/user_8_detailWaarneming.png)
 
-![Detailscherm](screenshots/07_detail.png)
+*Figuur 11 — Detailscherm van een waarneming met bewerkformulier en de knoppen "Opslaan" en "Verwijderen".*
 
 ### Bewerken
 
@@ -256,9 +264,9 @@ Na 24 uur is de waarneming **alleen-lezen**. U kunt de gegevens dan alleen nog i
 
 Tik op **Instellingen** op het startscherm.
 
-> **📷 Screenshot nodig:** De instellingenpagina — toon drie secties: "Naam wijzigen" (met invoerveld en "Opslaan"-knop), "Download mijn gegevens" (met uitlegzin en downloadknop), en "Vergeet mij" (met uitlegzin en rode knop).
+![Instellingen](images/user_a_mijInstellingen.png)
 
-![Instellingen](screenshots/08_instellingen.png)
+*Figuur 12 — Instellingenpagina met de secties "Naam wijzigen", "Download mijn gegevens" en "Vergeet mij".*
 
 ### Naam wijzigen
 
@@ -289,7 +297,45 @@ Gebruik deze knop als u uw account wilt overdragen aan een ander apparaat, of al
 
 ---
 
-## 10. Veelgestelde vragen
+## 10. Privacy en uw gegevens
+
+- Het enige persoonlijke dat we vastleggen is **de naam die u zelf opgeeft** en een **cookie** op uw telefoon. Geen e-mailadres, geen wachtwoord, geen sociale-media-koppeling.
+- Waarnemingen worden bewaard om de regelaar mee te kunnen verbeteren; de standaard-bewaartermijn is **één jaar**. Oudere waarnemingen worden automatisch verwijderd, inclusief de bijbehorende foto's.
+- Foto's krijgen automatisch een opschoning van metadata (GPS, camera, tijdstempel) voordat ze opgeslagen worden — dat is goed voor uw privacy.
+- U kunt op elk moment uw eigen gegevens als ZIP downloaden via **Instellingen → Download mijn gegevens** (zie §9).
+- De volledige uitleg staat op de **Privacy**-pagina, bereikbaar onderaan elk scherm. Daar staat ook hoe u uw rechten kunt uitoefenen.
+
+---
+
+## 11. Contact met de beheerder
+
+Het systeem heeft één beheerder (admin) per installatie. Zij/hij is de contactpersoon voor:
+
+- Een waarneming wijzigen of verwijderen die u zelf niet meer kunt aanpassen (na 24 uur).
+- Een vergeten of dubbele naam.
+- Storingen, foutmeldingen, een witte pagina, of de app reageert vreemd.
+- Het verzoek om al uw gegevens te verwijderen.
+- Algemene vragen over wat er met de waarnemingen gebeurt.
+
+De **contactgegevens van de beheerder** vindt u op de **Privacy**-pagina onderaan elk scherm.
+
+---
+
+## 12. Tot slot — over verwachting
+
+Een paar dingen die helpen om dit een nuttig instrument te houden:
+
+- **"Alles goed" is een prima waarneming.** Routineuze "ik liep door de kas, niets bijzonders" is precies wat de analist later wil zien om het normale patroon te kunnen vergelijken met de afwijkingen.
+- **Geen enkele waarneming is fout.** Dacht u dat een sensor afweek en bleek het mee te vallen? Die waarneming is alsnog waardevol — nu weten we dat het er in uw ogen *uit zag* alsof er iets aan de hand was. Dat is informatie.
+- **Het effect ziet u niet meteen in de app.** Uw waarnemingen worden niet live aan de regelaar teruggekoppeld — die werkt zelfstandig door. De analist neemt uw input mee bij periodieke evaluatie en bijstelling. Dat duurt soms weken. Wees daar niet door teleurgesteld; uw input doet er wél toe.
+- **Vlak na de installatie van een nieuwe regelaar wordt er veel ingevoerd**, omdat de regelaar nog niet altijd doet wat gebruikers verwachten. Na een paar weken zakt de inzet vaak — dat is normaal en menselijk. Blijf invoeren wanneer er echt iets te melden valt; dat zijn vaak de waarnemingen die de meeste waarde hebben.
+- **Twee tikken is genoeg.** Spendeer niet te veel tijd aan elke registratie. Liever vijf korte waarnemingen dan één perfecte.
+
+Veel succes, en bedankt voor het meekijken in de kas.
+
+---
+
+## 13. Veelgestelde vragen
 
 **Q: Ik heb de app geopend maar ik zie mijn waarnemingen niet meer.**  
 A: Uw cookie is mogelijk gewist (na het wissen van browsegegevens, privévenster, of "Vergeet mij"). Open de app opnieuw via de QR-code in de kas en registreer een nieuwe naam. Uw oude waarnemingen zijn nog beschikbaar voor de beheerder.
@@ -298,6 +344,11 @@ A: Uw cookie is mogelijk gewist (na het wissen van browsegegevens, privévenster
 
 **Q: De app vraagt me opnieuw om een naam, terwijl ik al geregistreerd was.**  
 A: Dit gebeurt als uw browsercookie is verwijderd. Dit kan na het wissen van browsegegevens, het gebruik van een privévenster, of na een fabrieksreset van uw telefoon. Registreer gewoon opnieuw met dezelfde naam.
+
+---
+
+**Q: De internetverbinding in de kas is slecht of valt weg. Wat kan ik doen?**  
+A: De app vereist actieve internetverbinding om waarnemingen op te slaan. Maak in een kas met slecht internet de waarneming buiten de kas (of waar u wel signaal heeft). **Belangrijk:** leeg of vernieuw uw browser niet wanneer u offline bent — daardoor verliest u uw cookie en kent de app u niet meer. Uw oude naam kunt u niet hergebruiken; u zou opnieuw moeten registreren onder een variant.
 
 ---
 
