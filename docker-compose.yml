@@ -4,6 +4,10 @@
 #
 #   1. Build the image (first time, and after Dockerfile changes):
 #        docker compose build
+#      NOTE: this reuses the php:8.3-fpm base already in the local image cache
+#      and will NOT pick up a newer PHP, however long it has been. To refresh
+#      the base — i.e. for PHP security updates — use tools/update.sh, which
+#      builds with --pull, keeps a rollback image and verifies the result.
 #
 #   2. One-off composer install (runs as the invoking user so vendor/ is
 #      owned by you, not by the container's www-data):
